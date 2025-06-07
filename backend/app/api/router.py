@@ -1,0 +1,17 @@
+from fastapi import APIRouter
+
+from app.api.endpoints import auth, health, portfolios, stocks, users
+
+# 메인 API 라우터
+api_router = APIRouter()
+
+# 각 모듈별 라우터 포함
+api_router.include_router(health.router, prefix="/health", tags=["health"])
+
+api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+
+api_router.include_router(stocks.router, prefix="/stocks", tags=["stocks"])
+
+api_router.include_router(portfolios.router, prefix="/portfolios", tags=["portfolios"])

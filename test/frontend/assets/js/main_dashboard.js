@@ -4,7 +4,7 @@
 function switchLanguage(lang) {
     const elements = document.querySelectorAll('[data-ko][data-en]');
     const placeholderElements = document.querySelectorAll('[data-ko-placeholder][data-en-placeholder]');
-    
+
     elements.forEach(element => {
         if (lang === 'ko') {
             element.textContent = element.getAttribute('data-ko');
@@ -12,7 +12,7 @@ function switchLanguage(lang) {
             element.textContent = element.getAttribute('data-en');
         }
     });
-    
+
     placeholderElements.forEach(element => {
         if (lang === 'ko') {
             element.placeholder = element.getAttribute('data-ko-placeholder');
@@ -20,7 +20,7 @@ function switchLanguage(lang) {
             element.placeholder = element.getAttribute('data-en-placeholder');
         }
     });
-    
+
     // 언어 버튼 상태 업데이트
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -30,7 +30,7 @@ function switchLanguage(lang) {
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     // 언어 전환 버튼 이벤트
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -45,14 +45,14 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             document.querySelector('.nav-link.active')?.classList.remove('active');
             this.classList.add('active');
-            
+
             // 현재 언어 확인
             const currentLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
-            
+
             // 페이지 제목 변경 (언어별)
             const linkText = this.textContent.trim();
             const panelTitle = document.querySelector('.panel-title');
-            
+
             if (linkText.includes('포트폴리오') || linkText.includes('Portfolio')) {
                 if (currentLang === 'ko') {
                     panelTitle.textContent = '💼 포트폴리오 관리';
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const companyName = this.querySelector('.company-name').textContent;
             const symbol = this.querySelector('.stock-symbol').textContent;
             const currentLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
-            
+
             if (currentLang === 'ko') {
                 document.querySelector('.panel-title').textContent = `${companyName} (${symbol}) 분석`;
             } else {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 this.style.transform = this.style.transform.replace(' scale(1.1)', '');
             }, 200);
-            
+
             // 연결선 하이라이트 효과
             document.querySelectorAll('.graph-connection').forEach(conn => {
                 conn.style.background = '#3b82f6';
@@ -156,12 +156,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // 검색 기능 (기본적인 필터링)
     document.querySelector('.search-box').addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase();
-        
+
         // 회사 카드 필터링
         document.querySelectorAll('.company-card').forEach(card => {
             const companyName = card.querySelector('.company-name').textContent.toLowerCase();
             const symbol = card.querySelector('.stock-symbol').textContent.toLowerCase();
-            
+
             if (companyName.includes(searchTerm) || symbol.includes(searchTerm)) {
                 card.style.display = 'block';
             } else {
@@ -173,9 +173,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 트레이딩 버튼 클릭 효과
     document.querySelector('.trade-button').addEventListener('click', function() {
         const currentLang = document.querySelector('.lang-btn.active').getAttribute('data-lang');
-        
+
         this.style.background = '#1d4ed8';
-        
+
         if (currentLang === 'ko') {
             this.textContent = '💹 처리중...';
             setTimeout(() => {
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('mouseenter', function() {
             this.style.background = '#1e293b';
         });
-        
+
         item.addEventListener('mouseleave', function() {
             this.style.background = '#0f172a';
         });
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.padding = '10px 8px';
             this.style.margin = '0 -8px';
         });
-        
+
         item.addEventListener('mouseleave', function() {
             this.style.background = 'transparent';
             this.style.borderRadius = '0';
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         changeElements.forEach(element => {
             const isUp = Math.random() > 0.5;
             const changeValue = (Math.random() * 2).toFixed(1); // 0~2% 변동
-            
+
             element.textContent = (isUp ? '+' : '-') + changeValue + '%';
             element.className = 'price-change ' + (isUp ? 'price-up' : 'price-down');
         });
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function adjustLayout() {
         const width = window.innerWidth;
         const mainContent = document.querySelector('.main-content');
-        
+
         if (width < 1200) {
             mainContent.style.gridTemplateColumns = '1fr';
             mainContent.style.height = 'auto';
@@ -374,12 +374,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     border: 1px solid #334155;
                 `;
                 document.body.appendChild(tooltip);
-                
+
                 const rect = this.getBoundingClientRect();
                 tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
                 tooltip.style.top = rect.top - tooltip.offsetHeight - 8 + 'px';
             });
-            
+
             element.addEventListener('mouseleave', function() {
                 const tooltip = document.querySelector('.tooltip');
                 if (tooltip) {
@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 초기 로딩 완료 메시지
     console.log('OntoTrade 메인 대시보드 로딩 완료');
-    
+
     // 개발 모드에서만 표시되는 디버그 정보
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         console.log('개발 모드에서 실행 중');

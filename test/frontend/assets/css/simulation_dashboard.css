@@ -633,11 +633,11 @@ body {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .simulation-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .quick-stats {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -647,26 +647,26 @@ body {
     .container {
         padding: 12px;
     }
-    
+
     .header {
         flex-direction: column;
         gap: 16px;
         text-align: center;
     }
-    
+
     .main-nav {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .quick-stats {
         grid-template-columns: 1fr;
     }
-    
+
     .page-title {
         font-size: 24px;
     }
-    
+
     .achievement-grid {
         grid-template-columns: repeat(2, 1fr);
     }

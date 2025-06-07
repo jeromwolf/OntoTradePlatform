@@ -7,7 +7,7 @@ class SimulationDashboard {
         this.leaderboardData = this.initializeLeaderboardData();
         this.newsData = this.initializeNewsData();
         this.userStats = this.initializeUserStats();
-        
+
         this.init();
     }
 
@@ -76,19 +76,19 @@ class SimulationDashboard {
 
     initializeNewsData() {
         return [
-            { 
+            {
                 title: { ko: 'Fed 기준금리 0.25%p 인하 결정', en: 'Fed Cuts Interest Rate by 0.25%' },
                 time: { ko: '30분 전', en: '30 min ago' },
                 impact: 'positive',
                 sector: { ko: '📈 주식 긍정적', en: '📈 Bullish for Stocks' }
             },
-            { 
+            {
                 title: { ko: '애플 신제품 발표회 예정', en: 'Apple Event Scheduled' },
                 time: { ko: '2시간 전', en: '2 hours ago' },
                 impact: 'neutral',
                 sector: { ko: '⚡ 기술주 영향', en: '⚡ Tech Impact' }
             },
-            { 
+            {
                 title: { ko: '유가 급등으로 에너지주 상승', en: 'Energy Stocks Rise on Oil Surge' },
                 time: { ko: '4시간 전', en: '4 hours ago' },
                 impact: 'positive',
@@ -151,14 +151,14 @@ class SimulationDashboard {
     // ===== 언어 전환 =====
     switchLanguage(lang) {
         if (this.currentLang === lang) return;
-        
+
         this.currentLang = lang;
-        
+
         // 언어 버튼 상태 업데이트
         document.querySelectorAll('.lang-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.lang === lang);
         });
-        
+
         // 모든 다국어 텍스트 업데이트
         document.querySelectorAll('[data-ko][data-en]').forEach(element => {
             const text = element.dataset[lang];
@@ -194,7 +194,7 @@ class SimulationDashboard {
     // ===== 액션 버튼 클릭 처리 =====
     handleActionClick(e) {
         const action = e.currentTarget.dataset.action;
-        
+
         switch (action) {
             case 'new-simulation':
             case 'create-new':
@@ -212,7 +212,7 @@ class SimulationDashboard {
     handleAchievementClick(e) {
         const achievement = e.currentTarget;
         const achievementId = achievement.dataset.achievement;
-        
+
         if (achievement.classList.contains('earned')) {
             this.showAchievementDetail(achievementId);
         } else {
@@ -242,7 +242,7 @@ class SimulationDashboard {
                 { text: { ko: '시작하기', en: 'Start' }, action: 'create', style: 'primary' }
             ]
         });
-        
+
         document.body.appendChild(modal);
     }
 
@@ -284,7 +284,7 @@ class SimulationDashboard {
 
         // 시뮬레이션 상세 페이지로 이동 또는 모달 표시
         console.log(`Opening simulation: ${simulationId}`, simulation);
-        
+
         // 실제로는 새 페이지로 이동하거나 상세 모달을 표시
         this.showSimulationDetailModal(simulation);
     }
@@ -295,13 +295,13 @@ class SimulationDashboard {
             content: this.createSimulationDetailContent(simulation),
             size: 'large'
         });
-        
+
         document.body.appendChild(modal);
     }
 
     createSimulationDetailContent(simulation) {
         const returnRate = ((simulation.currentValue - simulation.initialValue) / simulation.initialValue * 100).toFixed(1);
-        
+
         return `
             <div class="simulation-detail">
                 <div class="detail-stats">
@@ -333,12 +333,12 @@ class SimulationDashboard {
     createModal({ title, content, buttons = [], size = 'medium' }) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
-        
+
         const modalContent = document.createElement('div');
         modalContent.className = `modal-content ${size}`;
-        
+
         const titleText = typeof title === 'object' ? title[this.currentLang] : title;
-        
+
         modalContent.innerHTML = `
             <div class="modal-header">
                 <h3 class="modal-title">${titleText}</h3>
@@ -356,22 +356,22 @@ class SimulationDashboard {
                 </div>
             ` : ''}
         `;
-        
+
         modal.appendChild(modalContent);
-        
+
         // 모달 이벤트 리스너
         modal.addEventListener('click', (e) => {
             if (e.target === modal || e.target.classList.contains('modal-close')) {
                 this.closeModal(modal);
             }
         });
-        
+
         modalContent.addEventListener('click', (e) => {
             if (e.target.dataset.action) {
                 this.handleModalAction(e.target.dataset.action, modal);
             }
         });
-        
+
         return modal;
     }
 
@@ -420,7 +420,7 @@ class SimulationDashboard {
                 // 가상의 가격 변동 (-2% ~ +2%)
                 const change = (Math.random() - 0.5) * 0.04;
                 simulation.currentValue *= (1 + change);
-                
+
                 // UI 업데이트
                 this.updateSimulationCard(id, simulation);
             }
@@ -443,7 +443,7 @@ class SimulationDashboard {
         if (returnElement) {
             returnElement.textContent = `${returnRate > 0 ? '+' : ''}${returnRate}%`;
             returnElement.dataset.return = returnRate;
-            
+
             // 색상 업데이트
             returnElement.style.color = returnRate >= 0 ? '#10b981' : '#ef4444';
         }
@@ -472,8 +472,8 @@ class SimulationDashboard {
         const virtualMoneyElement = document.querySelector('.virtual-money');
         if (virtualMoneyElement) {
             const currentValue = 10000000 + (Math.random() - 0.5) * 100000;
-            const text = this.currentLang === 'ko' 
-                ? `💰 가상자산 $${currentValue.toLocaleString()}` 
+            const text = this.currentLang === 'ko'
+                ? `💰 가상자산 $${currentValue.toLocaleString()}`
                 : `💰 Virtual $${currentValue.toLocaleString()}`;
             virtualMoneyElement.textContent = text;
         }
@@ -508,7 +508,7 @@ class SimulationDashboard {
         document.querySelectorAll('.stat-value').forEach(element => {
             const finalValue = element.textContent;
             const isNumber = !isNaN(parseFloat(finalValue));
-            
+
             if (isNumber) {
                 const target = parseFloat(finalValue.replace(/[^0-9.-]/g, ''));
                 this.animateValue(element, 0, target, 1000, finalValue.includes('%') ? '%' : '');
@@ -519,21 +519,21 @@ class SimulationDashboard {
     animateValue(element, start, end, duration, suffix = '') {
         const range = end - start;
         const startTime = performance.now();
-        
+
         const updateValue = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             const current = start + (range * this.easeOutCubic(progress));
             const displayValue = Math.round(current * 10) / 10;
-            
+
             element.textContent = (displayValue > 0 && !suffix.includes('-') ? '+' : '') + displayValue + suffix;
-            
+
             if (progress < 1) {
                 requestAnimationFrame(updateValue);
             }
         };
-        
+
         requestAnimationFrame(updateValue);
     }
 
@@ -570,7 +570,7 @@ class SimulationDashboard {
     createNewSimulation() {
         console.log('Creating new simulation...');
         // 새 시뮬레이션 생성 로직
-        
+
         // 임시로 성공 메시지 표시
         this.showNotification({
             type: 'success',
@@ -582,13 +582,13 @@ class SimulationDashboard {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = typeof message === 'object' ? message[this.currentLang] : message;
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.classList.add('show');
         }, 100);
-        
+
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => {

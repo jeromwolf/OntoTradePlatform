@@ -1,0 +1,51 @@
+{
+  "recommendations": [
+    // Python 관련 확장
+    "ms-python.python",
+    "ms-python.black-formatter",
+    "ms-python.isort",
+    "ms-python.flake8",
+    "ms-python.mypy-type-checker",
+    "ms-python.pylint",
+
+    // TypeScript/JavaScript 관련 확장
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+
+    // React 관련 확장
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+    "bradlc.vscode-tailwindcss",
+
+    // 일반 개발 도구
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml",
+    "ms-vscode.vscode-markdown",
+    "yzhang.markdown-all-in-one",
+
+    // Git 관련
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+
+    // 코드 품질 및 보안
+    "ms-vscode.vscode-code-coverage",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode-remote.remote-containers",
+
+    // 유틸리티
+    "ms-vscode.live-server",
+    "christian-kohler.path-intellisense",
+    "visualstudioexptteam.vscodeintellicode",
+    "ms-vscode.vscode-thunder-client",
+
+    // 테마 및 아이콘
+    "pkief.material-icon-theme",
+    "github.github-vscode-theme"
+  ],
+  "unwantedRecommendations": [
+    "ms-python.autopep8",
+    "ms-python.yapf"
+  ]
+}
