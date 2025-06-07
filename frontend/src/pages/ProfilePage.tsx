@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../lib/supabase";
 
 interface UserProfile {
   id: string;
@@ -20,59 +20,59 @@ const ProfilePage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    full_name: '',
-    website: '',
-    bio: ''
+    full_name: "",
+    website: "",
+    bio: "",
   });
 
   const getProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      if (!user) throw new Error('사용자가 로그인되지 않았습니다');
+      if (!user) throw new Error("사용자가 로그인되지 않았습니다");
 
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== "PGRST116") {
         throw error;
       }
 
       if (data) {
         setProfile(data);
         setFormData({
-          full_name: data.full_name || '',
-          website: data.website || '',
-          bio: data.bio || ''
+          full_name: data.full_name || "",
+          website: data.website || "",
+          bio: data.bio || "",
         });
       } else {
         // 프로필이 없으면 기본 프로필 생성
         const newProfile = {
           id: user.id,
-          email: user.email || '',
-          full_name: user.user_metadata?.full_name || '',
-          avatar_url: user.user_metadata?.avatar_url || '',
-          updated_at: new Date().toISOString()
+          email: user.email || "",
+          full_name: user.user_metadata?.full_name || "",
+          avatar_url: user.user_metadata?.avatar_url || "",
+          updated_at: new Date().toISOString(),
         };
-        
+
         const { error: insertError } = await supabase
-          .from('profiles')
+          .from("profiles")
           .insert([newProfile]);
 
         if (insertError) throw insertError;
-        
+
         setProfile(newProfile);
         setFormData({
-          full_name: newProfile.full_name || '',
-          website: '',
-          bio: ''
+          full_name: newProfile.full_name || "",
+          website: "",
+          bio: "",
         });
       }
     } catch {
-      setError('프로필을 불러오는데 실패했습니다.');
+      setError("프로필을 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -88,26 +88,24 @@ const ProfilePage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      if (!user) throw new Error('사용자가 로그인되지 않았습니다');
+      if (!user) throw new Error("사용자가 로그인되지 않았습니다");
 
       const updates = {
         id: user.id,
         full_name: formData.full_name,
         website: formData.website,
         bio: formData.bio,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(updates);
+      const { error } = await supabase.from("profiles").upsert(updates);
 
       if (error) throw error;
 
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
+      setProfile((prev) => (prev ? { ...prev, ...updates } : null));
       setIsEditing(false);
     } catch {
-      setError('프로필 업데이트에 실패했습니다.');
+      setError("프로필 업데이트에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -117,44 +115,46 @@ const ProfilePage: React.FC = () => {
     try {
       setUploading(true);
       setError(null);
-      
+
       if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('파일을 선택해주세요.');
+        throw new Error("파일을 선택해주세요.");
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user?.id}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from("avatars")
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ avatar_url: publicUrl })
-        .eq('id', user?.id);
+        .eq("id", user?.id);
 
       if (updateError) throw updateError;
 
-      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+      setProfile((prev) => (prev ? { ...prev, avatar_url: publicUrl } : null));
     } catch {
-      setError('아바타 업로드에 실패했습니다.');
+      setError("아바타 업로드에 실패했습니다.");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   if (loading) {
@@ -169,7 +169,9 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">프로필을 찾을 수 없습니다</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            프로필을 찾을 수 없습니다
+          </h2>
           <p className="text-gray-600">로그인 후 다시 시도해주세요.</p>
         </div>
       </div>
@@ -200,7 +202,7 @@ const ProfilePage: React.FC = () => {
                 onClick={() => setIsEditing(!isEditing)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                {isEditing ? '취소' : '수정'}
+                {isEditing ? "취소" : "수정"}
               </button>
             </div>
           </div>
@@ -213,12 +215,15 @@ const ProfilePage: React.FC = () => {
                 <div className="relative">
                   <img
                     className="h-24 w-24 rounded-full object-cover"
-                    src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email)}&background=6366f1&color=fff`}
+                    src={
+                      profile.avatar_url ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email)}&background=6366f1&color=fff`
+                    }
                     alt="프로필 사진"
                   />
                   {isEditing && (
                     <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer text-white text-xs font-medium">
-                      {uploading ? '업로드...' : '변경'}
+                      {uploading ? "업로드..." : "변경"}
                       <input
                         type="file"
                         accept="image/*"
@@ -231,11 +236,14 @@ const ProfilePage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-lg font-medium text-gray-900">
-                    {profile.full_name || '이름 없음'}
+                    {profile.full_name || "이름 없음"}
                   </h4>
                   <p className="text-sm text-gray-500">{profile.email}</p>
                   <p className="text-xs text-gray-400">
-                    마지막 업데이트: {profile.updated_at ? new Date(profile.updated_at).toLocaleDateString('ko-KR') : '정보 없음'}
+                    마지막 업데이트:{" "}
+                    {profile.updated_at
+                      ? new Date(profile.updated_at).toLocaleDateString("ko-KR")
+                      : "정보 없음"}
                   </p>
                 </div>
               </div>
@@ -257,7 +265,7 @@ const ProfilePage: React.FC = () => {
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">
-                      {profile.full_name || '이름이 설정되지 않았습니다'}
+                      {profile.full_name || "이름이 설정되지 않았습니다"}
                     </p>
                   )}
                 </div>
@@ -267,7 +275,9 @@ const ProfilePage: React.FC = () => {
                     이메일
                   </label>
                   <p className="mt-1 text-sm text-gray-900">{profile.email}</p>
-                  <p className="mt-1 text-xs text-gray-500">이메일은 변경할 수 없습니다</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    이메일은 변경할 수 없습니다
+                  </p>
                 </div>
 
                 <div>
@@ -295,7 +305,7 @@ const ProfilePage: React.FC = () => {
                           {profile.website}
                         </a>
                       ) : (
-                        '웹사이트가 설정되지 않았습니다'
+                        "웹사이트가 설정되지 않았습니다"
                       )}
                     </p>
                   )}
@@ -316,7 +326,7 @@ const ProfilePage: React.FC = () => {
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
-                      {profile.bio || '자기소개가 설정되지 않았습니다'}
+                      {profile.bio || "자기소개가 설정되지 않았습니다"}
                     </p>
                   )}
                 </div>
@@ -336,7 +346,7 @@ const ProfilePage: React.FC = () => {
                     disabled={loading}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
-                    {loading ? '저장 중...' : '저장'}
+                    {loading ? "저장 중..." : "저장"}
                   </button>
                 </div>
               )}

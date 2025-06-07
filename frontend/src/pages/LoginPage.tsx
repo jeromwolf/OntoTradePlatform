@@ -2,52 +2,52 @@
  * 로그인 페이지
  */
 
-import React, { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
 export const LoginPage: React.FC = () => {
-  const { signIn, signInWithGoogle, signInWithFacebook, loading } = useAuth()
-  const navigate = useNavigate()
-  
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const { signIn, signInWithGoogle, signInWithFacebook, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
+    e.preventDefault();
+    setError("");
+
     if (!email || !password) {
-      setError('이메일과 비밀번호를 입력해주세요.')
-      return
+      setError("이메일과 비밀번호를 입력해주세요.");
+      return;
     }
-    
+
     try {
-      await signIn(email, password)
-      navigate('/dashboard')
+      await signIn(email, password);
+      navigate("/dashboard");
     } catch (err: any) {
-      setError(err.message || '로그인에 실패했습니다.')
+      setError(err.message || "로그인에 실패했습니다.");
     }
-  }
+  };
 
   const handleGoogleLogin = async () => {
-    setError('')
+    setError("");
     try {
-      await signInWithGoogle()
+      await signInWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Google 로그인에 실패했습니다.')
+      setError(err.message || "Google 로그인에 실패했습니다.");
     }
-  }
+  };
 
   const handleFacebookLogin = async () => {
-    setError('')
+    setError("");
     try {
-      await signInWithFacebook()
+      await signInWithFacebook();
     } catch (err: any) {
-      setError(err.message || 'Facebook 로그인에 실패했습니다.')
+      setError(err.message || "Facebook 로그인에 실패했습니다.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -57,7 +57,7 @@ export const LoginPage: React.FC = () => {
             OntoTrade에 로그인
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            또는{' '}
+            또는{" "}
             <Link
               to="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -66,14 +66,14 @@ export const LoginPage: React.FC = () => {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
               {error}
             </div>
           )}
-          
+
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
@@ -126,7 +126,7 @@ export const LoginPage: React.FC = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? '로그인 중...' : '로그인'}
+              {loading ? "로그인 중..." : "로그인"}
             </button>
           </div>
 
@@ -174,8 +174,12 @@ export const LoginPage: React.FC = () => {
                 disabled={loading}
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 <span className="ml-2">Facebook</span>
               </button>
@@ -190,7 +194,7 @@ export const LoginPage: React.FC = () => {
               비밀번호를 잊으셨나요?
             </Link>
             <div className="text-sm">
-              <span className="text-gray-600">계정이 없으신가요?</span>{' '}
+              <span className="text-gray-600">계정이 없으신가요?</span>{" "}
               <Link
                 to="/signup"
                 className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -202,5 +206,5 @@ export const LoginPage: React.FC = () => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};

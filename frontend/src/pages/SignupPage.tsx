@@ -2,67 +2,66 @@
  * 회원가입 페이지
  */
 
-import React, { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 export const SignupPage: React.FC = () => {
-  const { signUp, signInWithGoogle, signInWithFacebook, loading } = useAuth()
-  const navigate = useNavigate()
-  
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
+  const { signUp, signInWithGoogle, signInWithFacebook, loading } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setMessage('')
-    
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
     if (!email || !password || !confirmPassword) {
-      setError('모든 필드를 입력해주세요.')
-      return
+      setError("모든 필드를 입력해주세요.");
+      return;
     }
-    
+
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.')
-      return
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
     }
-    
+
     if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.')
-      return
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      return;
     }
-    
+
     try {
-      const result = await signUp(email, password)
-      console.log('회원가입 결과:', result)
-      setMessage('회원가입이 완료되었습니다! 이메일을 확인해주세요.')
+      const result = await signUp(email, password);
+      console.log("회원가입 결과:", result);
+      setMessage("회원가입이 완료되었습니다! 이메일을 확인해주세요.");
     } catch (err: any) {
-      console.error('회원가입 오류 상세:', err)
-      setError(err.message || '회원가입에 실패했습니다.')
+      console.error("회원가입 오류 상세:", err);
+      setError(err.message || "회원가입에 실패했습니다.");
     }
-  }
+  };
 
   const handleGoogleSignup = async () => {
-    setError('')
+    setError("");
     try {
-      await signInWithGoogle()
+      await signInWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Google 회원가입에 실패했습니다.')
+      setError(err.message || "Google 회원가입에 실패했습니다.");
     }
-  }
+  };
 
   const handleFacebookSignup = async () => {
-    setError('')
+    setError("");
     try {
-      await signInWithFacebook()
+      await signInWithFacebook();
     } catch (err: any) {
-      setError(err.message || 'Facebook 회원가입에 실패했습니다.')
+      setError(err.message || "Facebook 회원가입에 실패했습니다.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -72,7 +71,7 @@ export const SignupPage: React.FC = () => {
             OntoTrade 회원가입
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            이미 계정이 있으신가요?{' '}
+            이미 계정이 있으신가요?{" "}
             <Link
               to="/login"
               className="font-medium text-indigo-600 hover:text-indigo-500"
@@ -81,23 +80,26 @@ export const SignupPage: React.FC = () => {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleEmailSignup}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
               {error}
             </div>
           )}
-          
+
           {message && (
             <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
               {message}
             </div>
           )}
-          
+
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 이메일 주소
               </label>
               <input
@@ -112,9 +114,12 @@ export const SignupPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 비밀번호
               </label>
               <input
@@ -129,9 +134,12 @@ export const SignupPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            
+
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
                 비밀번호 확인
               </label>
               <input
@@ -154,7 +162,7 @@ export const SignupPage: React.FC = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? '가입 중...' : '회원가입'}
+              {loading ? "가입 중..." : "회원가입"}
             </button>
           </div>
 
@@ -202,8 +210,12 @@ export const SignupPage: React.FC = () => {
                 disabled={loading}
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 <span className="ml-2">Facebook</span>
               </button>
@@ -212,5 +224,5 @@ export const SignupPage: React.FC = () => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};

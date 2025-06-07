@@ -52,21 +52,21 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id
 ### Supabase RLS 정책
 ```sql
 -- 프로필 테이블 보안 정책
-CREATE POLICY "Users can view own profile" 
-ON profiles FOR SELECT 
+CREATE POLICY "Users can view own profile"
+ON profiles FOR SELECT
 USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own profile" 
-ON profiles FOR UPDATE 
+CREATE POLICY "Users can update own profile"
+ON profiles FOR UPDATE
 USING (auth.uid() = id);
 
 -- 아바타 스토리지 보안 정책
-CREATE POLICY "Avatar images are publicly accessible" 
-ON storage.objects FOR SELECT 
+CREATE POLICY "Avatar images are publicly accessible"
+ON storage.objects FOR SELECT
 USING (bucket_id = 'avatars');
 
-CREATE POLICY "Users can upload own avatar" 
-ON storage.objects FOR INSERT 
+CREATE POLICY "Users can upload own avatar"
+ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
 ```
 

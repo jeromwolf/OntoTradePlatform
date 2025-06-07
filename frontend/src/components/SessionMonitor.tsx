@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { sessionSecurity } from '../utils/security';
+import React, { useEffect, useCallback } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { sessionSecurity } from "../utils/security";
 
 /**
  * 세션 활동 모니터링 컴포넌트
@@ -22,7 +22,7 @@ const SessionMonitor: React.FC = () => {
     const isExpired = sessionSecurity.isSessionExpired(lastActivity);
 
     if (isExpired) {
-      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+      alert("세션이 만료되었습니다. 다시 로그인해주세요.");
       await signOut();
     }
   }, [user, signOut]);
@@ -32,12 +32,12 @@ const SessionMonitor: React.FC = () => {
 
     // 사용자 활동 이벤트 리스너 등록
     const activityEvents = [
-      'mousedown',
-      'mousemove',
-      'keypress',
-      'scroll',
-      'touchstart',
-      'click'
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+      "click",
     ];
 
     // 이벤트 핸들러
@@ -46,7 +46,7 @@ const SessionMonitor: React.FC = () => {
     };
 
     // 이벤트 리스너 등록
-    activityEvents.forEach(event => {
+    activityEvents.forEach((event) => {
       document.addEventListener(event, handleActivity, true);
     });
 
@@ -61,15 +61,15 @@ const SessionMonitor: React.FC = () => {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // 컴포넌트 언마운트 시 정리
     return () => {
-      activityEvents.forEach(event => {
+      activityEvents.forEach((event) => {
         document.removeEventListener(event, handleActivity, true);
       });
       clearInterval(sessionCheckInterval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [user, updateActivity, checkSessionExpiry]);
 

@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 const ResetPasswordPage: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
-      setError('이메일을 입력해주세요.');
+      setError("이메일을 입력해주세요.");
       return;
     }
 
@@ -27,9 +27,11 @@ const ResetPasswordPage: React.FC = () => {
 
       if (error) throw error;
 
-      setMessage('비밀번호 재설정 링크가 이메일로 전송되었습니다. 이메일을 확인해주세요.');
+      setMessage(
+        "비밀번호 재설정 링크가 이메일로 전송되었습니다. 이메일을 확인해주세요.",
+      );
     } catch (error: any) {
-      setError(error.message || '비밀번호 재설정 요청 중 오류가 발생했습니다.');
+      setError(error.message || "비밀번호 재설정 요청 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ const ResetPasswordPage: React.FC = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? '전송 중...' : '재설정 링크 전송'}
+              {loading ? "전송 중..." : "재설정 링크 전송"}
             </button>
           </div>
 

@@ -74,7 +74,10 @@ async def get_portfolios():
     ]
 
     return JSONResponse(
-        {"portfolios": mock_portfolios, "total_portfolios": len(mock_portfolios)}
+        {
+            "portfolios": mock_portfolios,
+            "total_portfolios": len(mock_portfolios),
+        }
     )
 
 

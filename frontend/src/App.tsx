@@ -1,32 +1,41 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { LoginPage } from './pages/LoginPage'
-import { SignupPage } from './pages/SignupPage'
-import ProfilePage from './pages/ProfilePage'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import ResetPasswordConfirmPage from './pages/ResetPasswordConfirmPage'
-import SessionMonitor from './components/SessionMonitor'
-import MonitoringExample from './components/MonitoringExample'
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
+import ProfilePage from "./pages/ProfilePage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ResetPasswordConfirmPage from "./pages/ResetPasswordConfirmPage";
+import ComponentsTestPage from "./pages/ComponentsTestPage";
+import SessionMonitor from "./components/SessionMonitor";
+import MonitoringExample from "./components/MonitoringExample";
 
 // 프로텍티드 라우트 컴포넌트
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth()
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
-    )
+    );
   }
 
-  return user ? <>{children}</> : <Navigate to="/login" replace />
-}
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
+};
 
 // 메인 대시보드 컴포넌트
 const Dashboard: React.FC = () => {
-  const { user, signOut } = useAuth()
+  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,7 +43,10 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link to="/dashboard" className="text-xl font-semibold hover:text-gray-700">
+              <Link
+                to="/dashboard"
+                className="text-xl font-semibold hover:text-gray-700"
+              >
                 OntoTrade Platform
               </Link>
             </div>
@@ -43,8 +55,18 @@ const Dashboard: React.FC = () => {
                 to="/profile"
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
               >
-                <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="h-5 w-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
                 프로필
               </Link>
@@ -89,23 +111,23 @@ const Dashboard: React.FC = () => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
 // 퍼블릭 라우트 (로그인하지 않은 사용자용)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
-    )
+    );
   }
 
-  return user ? <Navigate to="/dashboard" replace /> : <>{children}</>
-}
+  return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+};
 
 // 홈페이지 컴포넌트
 const HomePage: React.FC = () => {
@@ -162,8 +184,8 @@ const HomePage: React.FC = () => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
 function App() {
   return (
@@ -236,11 +258,19 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/components"
+              element={
+                <ProtectedRoute>
+                  <ComponentsTestPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -81,7 +81,11 @@ async def get_user_stats():
                     "earned_at": "2024-06-05T15:30:00Z",
                 },
             ],
-            "rank": {"current_rank": 156, "total_users": 1000, "percentile": 84.4},
+            "rank": {
+                "current_rank": 156,
+                "total_users": 1000,
+                "percentile": 84.4,
+            },
         }
     )
 

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 const ResetPasswordConfirmPage: React.FC = () => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
@@ -12,8 +12,8 @@ const ResetPasswordConfirmPage: React.FC = () => {
 
   useEffect(() => {
     // URL에서 access_token과 refresh_token을 확인
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
+    const accessToken = searchParams.get("access_token");
+    const refreshToken = searchParams.get("refresh_token");
 
     if (accessToken && refreshToken) {
       // 토큰을 세션에 설정
@@ -26,19 +26,19 @@ const ResetPasswordConfirmPage: React.FC = () => {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password || !confirmPassword) {
-      setError('모든 필드를 입력해주세요.');
+      setError("모든 필드를 입력해주세요.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError("비밀번호가 일치하지 않습니다.");
       return;
     }
 
     if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.');
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
       return;
     }
 
@@ -47,15 +47,15 @@ const ResetPasswordConfirmPage: React.FC = () => {
       setError(null);
 
       const { error } = await supabase.auth.updateUser({
-        password: password
+        password: password,
       });
 
       if (error) throw error;
 
-      alert('비밀번호가 성공적으로 변경되었습니다.');
-      navigate('/login');
+      alert("비밀번호가 성공적으로 변경되었습니다.");
+      navigate("/login");
     } catch (error: any) {
-      setError(error.message || '비밀번호 변경 중 오류가 발생했습니다.');
+      setError(error.message || "비밀번호 변경 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ const ResetPasswordConfirmPage: React.FC = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? '변경 중...' : '비밀번호 변경'}
+              {loading ? "변경 중..." : "비밀번호 변경"}
             </button>
           </div>
         </form>

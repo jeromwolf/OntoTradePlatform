@@ -1,6 +1,6 @@
 """OntoTrade 백엔드 애플리케이션 설정 모듈."""
 
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 from pydantic import validator
 from pydantic_settings import BaseSettings

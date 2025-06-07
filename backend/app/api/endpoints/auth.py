@@ -14,6 +14,8 @@ class UserLogin(BaseModel):
 
 
 class UserRegister(BaseModel):
+    """사용자 등록 요청 데이터 모델."""
+
     email: EmailStr
     username: str
     password: str
@@ -21,6 +23,8 @@ class UserRegister(BaseModel):
 
 
 class Token(BaseModel):
+    """인증 토큰 응답 데이터 모델."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -30,13 +34,13 @@ class Token(BaseModel):
 # 테스트용 환경변수에서 가져오기 (프로덕션에서는 실제 인증 구현 필요)
 TEST_EMAIL = "test@ontotrade.com"
 TEST_PASSWORD = "test_password_123"  # nosec B105
-MOCK_ACCESS_TOKEN = "mock_access_token_12345"  # nosec B106
-MOCK_REFRESH_TOKEN = "mock_refresh_token_67890"
+MOCK_ACCESS_TOKEN = "mock_access_token_12345"  # nosec B105
+MOCK_REFRESH_TOKEN = "mock_refresh_token_67890"  # nosec B105
 
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin):
-    """사용자 로그인"""
+    """사용자 로그인."""
     # TODO: 실제 인증 로직 구현 (Supabase 연동)
 
     # 임시 모의 응답
@@ -56,7 +60,7 @@ async def login(credentials: UserLogin):
 
 @router.post("/register")
 async def register(user_data: UserRegister):
-    """사용자 회원가입"""
+    """사용자 회원가입."""
     # TODO: 실제 회원가입 로직 구현
 
     # 비밀번호 확인
@@ -82,21 +86,21 @@ async def register(user_data: UserRegister):
 
 @router.post("/refresh")
 async def refresh_token():
-    """토큰 갱신"""
+    """토큰 갱신."""
     # TODO: 실제 토큰 갱신 로직 구현
     return JSONResponse({"access_token": "new_mock_access_token", "expires_in": 1800})
 
 
 @router.post("/logout")
 async def logout():
-    """로그아웃"""
+    """로그아웃."""
     # TODO: 토큰 무효화 로직 구현
     return JSONResponse({"message": "성공적으로 로그아웃되었습니다."})
 
 
 @router.get("/me")
 async def get_current_user():
-    """현재 사용자 정보 조회"""
+    """현재 사용자 정보 조회."""
     # TODO: JWT 토큰 검증 및 사용자 정보 반환
     return JSONResponse(
         {
