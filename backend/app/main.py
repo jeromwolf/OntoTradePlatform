@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.monitoring import init_sentry
+from app.core.websocket_simple import ws_router, get_websocket_stats
 
 
 def create_app() -> FastAPI:
@@ -61,15 +62,14 @@ app = create_app()
 @app.get("/")
 async def root():
     """루트 엔드포인트를 제공합니다."""
-    return JSONResponse(
-        {
-            "message": "OntoTrade API에 오신 것을 환영합니다! ",
-            "status": "healthy",
-            "version": settings.VERSION,
-            "docs": "/docs",
-            "description": "온톨로지 기반 투자 시뮬레이션 플랫폼",
-        }
-    )
+    return JSONResponse({
+        "message": "OntoTrade API에 오신 것을 환영합니다! ",
+        "status": "healthy",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "description": "온톨로지 기반 투자 시뮬레이션 플랫폼",
+        "websocket": "/ws"
+    })
 
 
 @app.get("/health")
@@ -78,9 +78,23 @@ async def health_check():
     return JSONResponse({"status": "healthy", "version": settings.VERSION})
 
 
+@app.get("/websocket/stats")
+async def websocket_stats():
+    """WebSocket 연결 통계를 제공합니다."""
+    stats = get_websocket_stats()
+    return JSONResponse({
+        "status": "success",
+        "data": stats
+    })
+
+
+# Socket.IO를 FastAPI와 통합
+app.include_router(ws_router)
+
+
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",
+        "app.main:app",  # Socket.IO 통합 앱 사용
         host="127.0.0.1",  # 보안상 localhost로 변경
         port=8000,
         reload=True,

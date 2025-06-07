@@ -13,6 +13,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ResetPasswordConfirmPage from "./pages/ResetPasswordConfirmPage";
 import ComponentsTestPage from "./pages/ComponentsTestPage";
+import WebSocketTestPage from "./pages/WebSocketTestPage";
 import SessionMonitor from "./components/SessionMonitor";
 import MonitoringExample from "./components/MonitoringExample";
 
@@ -69,6 +70,44 @@ const Dashboard: React.FC = () => {
                   />
                 </svg>
                 프로필
+              </Link>
+              <Link
+                to="/websocket"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
+              >
+                <svg
+                  className="h-5 w-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
+                  />
+                </svg>
+                실시간 데이터
+              </Link>
+              <Link
+                to="/components"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
+              >
+                <svg
+                  className="h-5 w-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14-7H5m14 14H5"
+                  />
+                </svg>
+                컴포넌트
               </Link>
               <span className="text-gray-700">Welcome, {user?.email}</span>
               <button
@@ -263,6 +302,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ComponentsTestPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/websocket"
+              element={
+                <ProtectedRoute>
+                  <WebSocketTestPage />
                 </ProtectedRoute>
               }
             />
