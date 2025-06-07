@@ -214,7 +214,7 @@ cd database
 ---
 
 ## 📁 프로젝트 구조
-
+```
 ontotrade/
 ├── 📂 frontend/                    # React 앱
 │   ├── 📂 src/
@@ -285,6 +285,7 @@ ontotrade/
 ├── 📄 .env.example               # 환경 변수 예시
 ├── 📄 docker-compose.yml         # Docker 설정
 └── 📄 package.json               # 루트 패키지 설정
+```
 
 ---
 
