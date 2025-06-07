@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoTrade - 투자 시뮬레이션</title>
+    <link rel="stylesheet" href="assets/css/simulation_dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="logo">⚡ OntoTrade</div>
+            
+            <nav class="main-nav">
+                <a href="main_dashboard.html" class="nav-link" data-ko="🏠 대시보드" data-en="🏠 Dashboard">🏠 대시보드</a>
+                <a href="#" class="nav-link" data-ko="💼 포트폴리오" data-en="💼 Portfolio">💼 포트폴리오</a>
+                <a href="#" class="nav-link" data-ko="📊 분석도구" data-en="📊 Analytics">📊 분석도구</a>
+                <a href="simulation_dashboard.html" class="nav-link active" data-ko="🎮 시뮬레이션" data-en="🎮 Simulation">🎮 시뮬레이션</a>
+                <a href="#" class="nav-link" data-ko="🏆 리더보드" data-en="🏆 Leaderboard">🏆 리더보드</a>
+                <a href="#" class="nav-link" data-ko="📚 학습센터" data-en="📚 Learn">📚 학습센터</a>
+                <a href="#" class="nav-link" data-ko="⚙️ 설정" data-en="⚙️ Settings">⚙️ 설정</a>
+            </nav>
+            
+            <div class="user-info">
+                <div class="language-toggle">
+                    <button class="lang-btn active" data-lang="ko">🇰🇷</button>
+                    <button class="lang-btn" data-lang="en">🇺🇸</button>
+                </div>
+                <div class="virtual-money" data-ko="💰 가상자산 $10,000,000" data-en="💰 Virtual $10,000,000">💰 가상자산 $10,000,000</div>
+                <div data-ko="👤 투자자님" data-en="👤 Trader">👤 투자자님</div>
+            </div>
+        </div>
+
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <h1 class="page-title" data-ko="🎮 투자 시뮬레이션" data-en="🎮 Investment Simulation">🎮 투자 시뮬레이션</h1>
+            <p class="page-subtitle" data-ko="실전과 동일한 환경에서 안전하게 투자 실력을 키워보세요" data-en="Develop your investment skills safely in a real-world environment">실전과 동일한 환경에서 안전하게 투자 실력을 키워보세요</p>
+            
+            <!-- 빠른 통계 -->
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">🏃‍♂️</div>
+                    <div class="stat-value">3</div>
+                    <div class="stat-label" data-ko="진행 중" data-en="Active">진행 중</div>
+                    <div class="stat-change stat-up" data-ko="+1 이번 주" data-en="+1 this week">+1 이번 주</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value">127위</div>
+                    <div class="stat-label" data-ko="전체 순위" data-en="Overall Rank">전체 순위</div>
+                    <div class="stat-change stat-up" data-ko="+23 상승" data-en="+23 up">+23 상승</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-value">+12.3%</div>
+                    <div class="stat-label" data-ko="평균 수익률" data-en="Avg Return">평균 수익률</div>
+                    <div class="stat-change stat-up" data-ko="+2.1% 이번 달" data-en="+2.1% this month">+2.1% 이번 달</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value">8/12</div>
+                    <div class="stat-label" data-ko="완료된 시뮬레이션" data-en="Completed Sims">완료된 시뮬레이션</div>
+                    <div class="stat-change" data-ko="승률 67%" data-en="67% Win Rate">승률 67%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="main-content">
+            <!-- 왼쪽: 시뮬레이션 목록 -->
+            <div class="left-column">
+                <div class="simulation-grid">
+                    <!-- 새 시뮬레이션 생성 카드 -->
+                    <div class="simulation-card new-simulation" data-action="create-new">
+                        <div class="new-icon">➕</div>
+                        <div class="new-title" data-ko="새 시뮬레이션 시작" data-en="Start New Simulation">새 시뮬레이션 시작</div>
+                        <div class="new-subtitle" data-ko="나만의 투자 전략을 테스트해보세요" data-en="Test your investment strategy">나만의 투자 전략을 테스트해보세요</div>
+                    </div>
+
+                    <!-- 진행 중인 시뮬레이션 1 -->
+                    <div class="simulation-card active" data-simulation-id="tech-focus">
+                        <div class="simulation-status status-active">
+                            <span class="live-indicator">
+                                <span class="live-dot"></span>
+                                <span data-ko="실시간" data-en="LIVE">실시간</span>
+                            </span>
+                        </div>
+                        <div class="simulation-header">
+                            <div class="simulation-title" data-ko="기술주 집중 투자" data-en="Tech Stock Focus">기술주 집중 투자</div>
+                            <div class="simulation-meta" data-ko="30일 • 시작일: 2024.06.01" data-en="30 days • Started: 2024.06.01">30일 • 시작일: 2024.06.01</div>
+                        </div>
+                        <div class="simulation-progress">
+                            <div class="progress-label">
+                                <span data-ko="진행률" data-en="Progress">진행률</span>
+                                <span data-ko="7/30일" data-en="7/30 days">7/30일</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 23%" data-progress="23"></div>
+                            </div>
+                        </div>
+                        <div class="simulation-stats">
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-return="+8.4">+8.4%</div>
+                                <div class="mini-stat-label" data-ko="수익률" data-en="Return">수익률</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-value="108400">$108,400</div>
+                                <div class="mini-stat-label" data-ko="현재가치" data-en="Current Value">현재가치</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-rank="23">23위</div>
+                                <div class="mini-stat-label" data-ko="순위" data-en="Rank">순위</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 진행 중인 시뮬레이션 2 -->
+                    <div class="simulation-card active" data-simulation-id="dividend-stable">
+                        <div class="simulation-status status-active">
+                            <span class="live-indicator">
+                                <span class="live-dot"></span>
+                                <span data-ko="실시간" data-en="LIVE">실시간</span>
+                            </span>
+                        </div>
+                        <div class="simulation-header">
+                            <div class="simulation-title" data-ko="배당주 안정형" data-en="Dividend Stable">배당주 안정형</div>
+                            <div class="simulation-meta" data-ko="90일 • 시작일: 2024.05.15" data-en="90 days • Started: 2024.05.15">90일 • 시작일: 2024.05.15</div>
+                        </div>
+                        <div class="simulation-progress">
+                            <div class="progress-label">
+                                <span data-ko="진행률" data-en="Progress">진행률</span>
+                                <span data-ko="23/90일" data-en="23/90 days">23/90일</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 26%" data-progress="26"></div>
+                            </div>
+                        </div>
+                        <div class="simulation-stats">
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-return="+3.2">+3.2%</div>
+                                <div class="mini-stat-label" data-ko="수익률" data-en="Return">수익률</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-value="51600">$51,600</div>
+                                <div class="mini-stat-label" data-ko="현재가치" data-en="Current Value">현재가치</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-rank="89">89위</div>
+                                <div class="mini-stat-label" data-ko="순위" data-en="Rank">순위</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 대기 중인 시뮬레이션 -->
+                    <div class="simulation-card pending" data-simulation-id="esg-challenge">
+                        <div class="simulation-status status-pending" data-ko="대기중" data-en="Pending">대기중</div>
+                        <div class="simulation-header">
+                            <div class="simulation-title" data-ko="ESG 투자 챌린지" data-en="ESG Investment Challenge">ESG 투자 챌린지</div>
+                            <div class="simulation-meta" data-ko="14일 • 시작예정: 2024.06.10" data-en="14 days • Starts: 2024.06.10">14일 • 시작예정: 2024.06.10</div>
+                        </div>
+                        <div class="simulation-progress">
+                            <div class="progress-label">
+                                <span data-ko="참가자 모집중" data-en="Recruiting">참가자 모집중</span>
+                                <span data-ko="847/1000명" data-en="847/1000">847/1000명</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%" data-progress="85"></div>
+                            </div>
+                        </div>
+                        <div class="simulation-stats">
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">$25,000</div>
+                                <div class="mini-stat-label" data-ko="초기자금" data-en="Initial Fund">초기자금</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">$10,000</div>
+                                <div class="mini-stat-label" data-ko="상금" data-en="Prize">상금</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value">847명</div>
+                                <div class="mini-stat-label" data-ko="참가자" data-en="Participants">참가자</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 완료된 시뮬레이션 -->
+                    <div class="simulation-card completed" data-simulation-id="crisis-scenario">
+                        <div class="simulation-status status-completed" data-ko="완료" data-en="Completed">완료</div>
+                        <div class="simulation-header">
+                            <div class="simulation-title" data-ko="금융위기 시나리오" data-en="Financial Crisis Scenario">금융위기 시나리오</div>
+                            <div class="simulation-meta" data-ko="30일 • 완료일: 2024.05.30" data-en="30 days • Completed: 2024.05.30">30일 • 완료일: 2024.05.30</div>
+                        </div>
+                        <div class="simulation-progress">
+                            <div class="progress-label">
+                                <span data-ko="최종 결과" data-en="Final Result">최종 결과</span>
+                                <span data-ko="30/30일" data-en="30/30 days">30/30일</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%" data-progress="100"></div>
+                            </div>
+                        </div>
+                        <div class="simulation-stats">
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-return="-2.1">-2.1%</div>
+                                <div class="mini-stat-label" data-ko="최종수익률" data-en="Final Return">최종수익률</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-value="97900">$97,900</div>
+                                <div class="mini-stat-label" data-ko="최종가치" data-en="Final Value">최종가치</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="mini-stat-value" data-rank="156">156위</div>
+                                <div class="mini-stat-label" data-ko="최종순위" data-en="Final Rank">최종순위</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 사이드 패널들 -->
+            <div class="right-column">
+                <!-- 실시간 리더보드 -->
+                <div class="panel">
+                    <h3 class="panel-title" data-ko="🏆 실시간 리더보드" data-en="🏆 Live Leaderboard">🏆 실시간 리더보드</h3>
+                    
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-left">
+                            <div class="rank top">1</div>
+                            <div class="user-avatar">👑</div>
+                            <div class="user-info-board">
+                                <div class="username">InvestorKing</div>
+                                <div class="user-meta" data-ko="전문가 • 3년차" data-en="Expert • 3 years">전문가 • 3년차</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-score">
+                            <div class="score-value">+47.2%</div>
+                            <div class="score-change" data-ko="+2.1% 오늘" data-en="+2.1% today">+2.1% 오늘</div>
+                        </div>
+                    </div>
+
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-left">
+                            <div class="rank top">2</div>
+                            <div class="user-avatar">🚀</div>
+                            <div class="user-info-board">
+                                <div class="username">TechGuru99</div>
+                                <div class="user-meta" data-ko="고급자 • 2년차" data-en="Advanced • 2 years">고급자 • 2년차</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-score">
+                            <div class="score-value">+42.8%</div>
+                            <div class="score-change" data-ko="+1.3% 오늘" data-en="+1.3% today">+1.3% 오늘</div>
+                        </div>
+                    </div>
+
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-left">
+                            <div class="rank top">3</div>
+                            <div class="user-avatar">⭐</div>
+                            <div class="user-info-board">
+                                <div class="username">ValueHunter</div>
+                                <div class="user-meta" data-ko="중급자 • 1년차" data-en="Intermediate • 1 year">중급자 • 1년차</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-score">
+                            <div class="score-value">+38.9%</div>
+                            <div class="score-change" data-ko="-0.5% 오늘" data-en="-0.5% today">-0.5% 오늘</div>
+                        </div>
+                    </div>
+
+                    <div class="leaderboard-item my-rank">
+                        <div class="leaderboard-left">
+                            <div class="rank">127</div>
+                            <div class="user-avatar">👤</div>
+                            <div class="user-info-board">
+                                <div class="username" data-ko="나 (투자자님)" data-en="You (Trader)">나 (투자자님)</div>
+                                <div class="user-meta" data-ko="초급자 • 3개월차" data-en="Beginner • 3 months">초급자 • 3개월차</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-score">
+                            <div class="score-value">+12.3%</div>
+                            <div class="score-change" data-ko="+0.8% 오늘" data-en="+0.8% today">+0.8% 오늘</div>
+                        </div>
+                    </div>
+
+                    <button class="action-button secondary" data-ko="전체 랭킹 보기" data-en="View Full Ranking">전체 랭킹 보기</button>
+                </div>
+
+                <!-- 달성 가능한 업적 -->
+                <div class="panel">
+                    <h3 class="panel-title" data-ko="🎖️ 업적 및 배지" data-en="🎖️ Achievements & Badges">🎖️ 업적 및 배지</h3>
+                    
+                    <div class="achievement-grid">
+                        <div class="achievement earned" data-achievement="first-trade">
+                            <div class="achievement-icon">🥉</div>
+                            <div class="achievement-name" data-ko="첫 거래" data-en="First Trade">첫 거래</div>
+                        </div>
+                        <div class="achievement earned" data-achievement="profit">
+                            <div class="achievement-icon">📈</div>
+                            <div class="achievement-name" data-ko="수익 달성" data-en="Profit">수익 달성</div>
+                        </div>
+                        <div class="achievement earned" data-achievement="learner">
+                            <div class="achievement-icon">📚</div>
+                            <div class="achievement-name" data-ko="학습 완료" data-en="Learner">학습 완료</div>
+                        </div>
+                        <div class="achievement" data-achievement="winning-streak">
+                            <div class="achievement-icon">🥈</div>
+                            <div class="achievement-name" data-ko="연승" data-en="Win Streak">연승</div>
+                        </div>
+                        <div class="achievement" data-achievement="long-term">
+                            <div class="achievement-icon">💎</div>
+                            <div class="achievement-name" data-ko="장기 투자" data-en="Long Term">장기 투자</div>
+                        </div>
+                        <div class="achievement" data-achievement="hot-streak">
+                            <div class="achievement-icon">🔥</div>
+                            <div class="achievement-name" data-ko="핫 스트릭" data-en="Hot Streak">핫 스트릭</div>
+                        </div>
+                        <div class="achievement" data-achievement="accurate">
+                            <div class="achievement-icon">🎯</div>
+                            <div class="achievement-name" data-ko="정확한 예측" data-en="Accurate">정확한 예측</div>
+                        </div>
+                        <div class="achievement" data-achievement="champion">
+                            <div class="achievement-icon">🏆</div>
+                            <div class="achievement-name" data-ko="챔피언" data-en="Champion">챔피언</div>
+                        </div>
+                        <div class="achievement" data-achievement="speed-trader">
+                            <div class="achievement-icon">⚡</div>
+                            <div class="achievement-name" data-ko="신속 거래" data-en="Speed Trader">신속 거래</div>
+                        </div>
+                    </div>
+
+                    <button class="action-button secondary" data-ko="모든 배지 보기" data-en="View All Badges">모든 배지 보기</button>
+                </div>
+
+                <!-- 시장 뉴스 및 이벤트 -->
+                <div class="panel">
+                    <h3 class="panel-title" data-ko="📰 시뮬레이션 영향 뉴스" data-en="📰 Market Impact News">📰 시뮬레이션 영향 뉴스</h3>
+                    
+                    <div class="news-item" data-impact="positive">
+                        <div class="news-title" data-ko="Fed 기준금리 0.25%p 인하 결정" data-en="Fed Cuts Interest Rate by 0.25%">Fed 기준금리 0.25%p 인하 결정</div>
+                        <div class="news-meta">
+                            <span data-ko="30분 전" data-en="30 min ago">30분 전</span>
+                            <span data-ko="📈 주식 긍정적" data-en="📈 Bullish for Stocks">📈 주식 긍정적</span>
+                        </div>
+                    </div>
+
+                    <div class="news-item" data-impact="neutral">
+                        <div class="news-title" data-ko="애플 신제품 발표회 예정" data-en="Apple Event Scheduled">애플 신제품 발표회 예정</div>
+                        <div class="news-meta">
+                            <span data-ko="2시간 전" data-en="2 hours ago">2시간 전</span>
+                            <span data-ko="⚡ 기술주 영향" data-en="⚡ Tech Impact">⚡ 기술주 영향</span>
+                        </div>
+                    </div>
+
+                    <div class="news-item" data-impact="positive">
+                        <div class="news-title" data-ko="유가 급등으로 에너지주 상승" data-en="Energy Stocks Rise on Oil Surge">유가 급등으로 에너지주 상승</div>
+                        <div class="news-meta">
+                            <span data-ko="4시간 전" data-en="4 hours ago">4시간 전</span>
+                            <span data-ko="🛢️ 에너지 섹터" data-en="🛢️ Energy Sector">🛢️ 에너지 섹터</span>
+                        </div>
+                    </div>
+
+                    <button class="action-button secondary" data-ko="모든 뉴스 보기" data-en="View All News">모든 뉴스 보기</button>
+                </div>
+
+                <!-- 오늘의 투자 팁 -->
+                <div class="tips-section">
+                    <div class="tips-title">
+                        <span>💡</span> <span data-ko="오늘의 시뮬레이션 팁" data-en="Today's Trading Tips">오늘의 시뮬레이션 팁</span>
+                    </div>
+                    <div class="tip-item" data-ko="변동성이 클 때는 작은 단위로 분할 매수하세요" data-en="Use dollar-cost averaging during high volatility">변동성이 클 때는 작은 단위로 분할 매수하세요</div>
+                    <div class="tip-item" data-ko="손절매 라인을 미리 정하고 지키세요" data-en="Set stop-loss levels in advance and stick to them">손절매 라인을 미리 정하고 지키세요</div>
+                    <div class="tip-item" data-ko="뉴스 발표 전후 급변동을 주의하세요" data-en="Watch for volatility around news announcements">뉴스 발표 전후 급변동을 주의하세요</div>
+                    <div class="tip-item" data-ko="포트폴리오 다각화로 리스크를 분산하세요" data-en="Diversify your portfolio to spread risk">포트폴리오 다각화로 리스크를 분산하세요</div>
+                </div>
+
+                <!-- 빠른 액션 버튼들 -->
+                <div class="action-buttons">
+                    <button class="action-button" data-action="new-simulation" data-ko="🚀 새 시뮬레이션 시작" data-en="🚀 Start New Simulation">🚀 새 시뮬레이션 시작</button>
+                    <button class="action-button secondary" data-action="performance" data-ko="📊 성과 분석 보기" data-en="📊 View Performance">📊 성과 분석 보기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/simulation_dashboard.js"></script>
+</body>
+</html>

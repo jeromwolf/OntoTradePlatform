@@ -1,0 +1,12 @@
+{
+  "tasksFile": ".taskmaster/tasks/tasks.json",
+  "outputDir": ".taskmaster/tasks",
+  "reports": {
+    "complexityReport": ".taskmaster/reports/task-complexity-report.json"
+  },
+  "models": {
+    "main": "claude-3-5-sonnet-20240620",
+    "fallback": "claude-3-haiku-20240307",
+    "research": "claude-3-5-sonnet-20240620"
+  }
+}

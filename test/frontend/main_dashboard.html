@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntoTrade - 증권 온톨로지 플랫폼</title>
+    <link rel="stylesheet" href="assets/css/main_dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <div class="logo">⚡ OntoTrade</div>
+            
+            <!-- 메인 네비게이션 -->
+            <nav class="main-nav">
+                <a href="#" class="nav-link active" data-ko="🏠 대시보드" data-en="🏠 Dashboard">
+                    🏠 대시보드
+                </a>
+                <a href="#" class="nav-link" data-ko="💼 포트폴리오" data-en="💼 Portfolio">
+                    💼 포트폴리오
+                </a>
+                <a href="#" class="nav-link" data-ko="📊 분석도구" data-en="📊 Analytics">
+                    📊 분석도구
+                </a>
+                <a href="#" class="nav-link" data-ko="🏆 리더보드" data-en="🏆 Leaderboard">
+                    🏆 리더보드
+                </a>
+                <a href="#" class="nav-link" data-ko="📚 학습센터" data-en="📚 Learn">
+                    📚 학습센터
+                </a>
+                <a href="#" class="nav-link" data-ko="⚙️ 설정" data-en="⚙️ Settings">
+                    ⚙️ 설정
+                </a>
+            </nav>
+            
+            <div class="user-info">
+                <div class="language-toggle">
+                    <button class="lang-btn active" data-lang="ko">🇰🇷</button>
+                    <button class="lang-btn" data-lang="en">🇺🇸</button>
+                </div>
+                <div class="virtual-money" data-ko="💰 가상자산 $10,000,000" data-en="💰 Virtual $10,000,000">💰 가상자산 $10,000,000</div>
+                <div data-ko="👤 투자자님" data-en="👤 Trader">👤 투자자님</div>
+            </div>
+        </div>
+
+        <!-- 메인 컨텐츠 -->
+        <div class="main-content">
+            <!-- 왼쪽 사이드바 -->
+            <div class="sidebar">
+                <div class="search-section">
+                    <input type="text" class="search-box" data-ko-placeholder="주식, 기업명 검색..." data-en-placeholder="Search stocks, companies..." placeholder="주식, 기업명 검색...">
+                </div>
+
+                <div class="category-section">
+                    <h3 data-ko="마켓" data-en="Markets">마켓</h3>
+                    <ul class="category-list">
+                        <li class="category-item active" data-ko="🌐 전체 기업" data-en="🌐 All Companies">
+                            🌐 전체 기업
+                        </li>
+                        <li class="category-item" data-ko="💻 기술주" data-en="💻 Technology">
+                            💻 기술주
+                        </li>
+                        <li class="category-item" data-ko="🏦 금융주" data-en="🏦 Finance">
+                            🏦 금융주
+                        </li>
+                        <li class="category-item" data-ko="🏭 산업재" data-en="🏭 Industrial">
+                            🏭 산업재
+                        </li>
+                        <li class="category-item" data-ko="⚡ 에너지" data-en="⚡ Energy">
+                            ⚡ 에너지
+                        </li>
+                        <li class="category-item" data-ko="🛒 소비재" data-en="🛒 Consumer">
+                            🛒 소비재
+                        </li>
+                        <li class="category-item" data-ko="💊 헬스케어" data-en="💊 Healthcare">
+                            💊 헬스케어
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="category-section">
+                    <h3 data-ko="분석도구" data-en="Analysis Tools">분석도구</h3>
+                    <ul class="category-list">
+                        <li class="category-item" data-ko="🕸️ 온톨로지 뷰" data-en="🕸️ Ontology View">
+                            🕸️ 온톨로지 뷰
+                        </li>
+                        <li class="category-item" data-ko="📊 재무 분석" data-en="📊 Financial Analysis">
+                            📊 재무 분석
+                        </li>
+                        <li class="category-item" data-ko="👥 인물 네트워크" data-en="👥 People Network">
+                            👥 인물 네트워크
+                        </li>
+                        <li class="category-item" data-ko="🏭 산업 지도" data-en="🏭 Industry Map">
+                            🏭 산업 지도
+                        </li>
+                        <li class="category-item" data-ko="📈 거래 패턴" data-en="📈 Trading Patterns">
+                            📈 거래 패턴
+                        </li>
+                        <li class="category-item" data-ko="🎯 투자 시뮬레이션" data-en="🎯 Simulation">
+                            🎯 투자 시뮬레이션
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="category-section">
+                    <h3 data-ko="AI 기능 (V2.0)" data-en="AI Features (V2.0)">AI 기능 (V2.0)</h3>
+                    <ul class="category-list">
+                        <li class="category-item disabled" data-ko="🤖 주가 예측" data-en="🤖 Price Prediction">
+                            🤖 주가 예측
+                        </li>
+                        <li class="category-item disabled" data-ko="📝 감성 분석" data-en="📝 Sentiment Analysis">
+                            📝 감성 분석
+                        </li>
+                        <li class="category-item disabled" data-ko="💡 투자 추천" data-en="💡 Recommendations">
+                            💡 투자 추천
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 중앙 메인 패널 -->
+            <div class="main-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title" data-ko="애플 (AAPL) 분석" data-en="Apple Inc. (AAPL) Analysis">애플 (AAPL) 분석</h2>
+                    <div class="view-controls">
+                        <button class="control-btn active" data-ko="그래프" data-en="Graph">그래프</button>
+                        <button class="control-btn" data-ko="목록" data-en="List">목록</button>
+                        <button class="control-btn" data-ko="차트" data-en="Chart">차트</button>
+                    </div>
+                </div>
+
+                <!-- 탭 네비게이션 -->
+                <div class="tab-navigation">
+                    <div class="tab active" data-ko="온톨로지" data-en="Ontology">온톨로지</div>
+                    <div class="tab" data-ko="관련기업" data-en="Related">관련기업</div>
+                    <div class="tab" data-ko="재무제표" data-en="Financials">재무제표</div>
+                    <div class="tab" data-ko="인물" data-en="People">인물</div>
+                    <div class="tab" data-ko="뉴스" data-en="News">뉴스</div>
+                    <div class="tab" data-ko="패턴" data-en="Patterns">패턴</div>
+                </div>
+
+                <!-- 온톨로지 그래프 영역 -->
+                <div class="ontology-graph">
+                    <div class="floating-graph-nodes">
+                        <div class="graph-node node-company">AAPL<br>Corp</div>
+                        <div class="graph-node node-stock">Stock<br>$189</div>
+                        <div class="graph-node node-news">News<br>+88%</div>
+                        <div class="graph-node node-industry">Tech<br>Sector</div>
+                        
+                        <div class="graph-connection conn1"></div>
+                        <div class="graph-connection conn2"></div>
+                        <div class="graph-connection conn3"></div>
+                    </div>
+                    <div class="graph-placeholder">
+                        <h3 data-ko="인터랙티브 지식 그래프" data-en="Interactive Knowledge Graph">인터랙티브 지식 그래프</h3>
+                        <p data-ko="노드를 클릭하여 연결된 정보를 탐색하세요" data-en="Click nodes to explore connected information">노드를 클릭하여 연결된 정보를 탐색하세요</p>
+                    </div>
+                </div>
+
+                <!-- 관련 기업 카드들 -->
+                <div class="company-card">
+                    <div class="company-header">
+                        <div class="company-name">Microsoft Corporation</div>
+                        <div class="stock-symbol">MSFT</div>
+                    </div>
+                    <div class="stock-price">
+                        <div class="price">$342.15</div>
+                        <div class="price-change price-up">+1.24%</div>
+                    </div>
+                    <div class="company-meta" data-ko="연결관계: 경쟁사, 동일 섹터, 공급망" data-en="Connections: Competitor, Same sector, Supply chain">
+                        연결관계: 경쟁사, 동일 섹터, 공급망
+                    </div>
+                </div>
+
+                <div class="company-card">
+                    <div class="company-header">
+                        <div class="company-name">Alphabet Inc.</div>
+                        <div class="stock-symbol">GOOGL</div>
+                    </div>
+                    <div class="stock-price">
+                        <div class="price">$138.21</div>
+                        <div class="price-change price-down">-0.87%</div>
+                    </div>
+                    <div class="company-meta" data-ko="연결관계: 경쟁사, 모바일 생태계 파트너" data-en="Connections: Competitor, Mobile ecosystem partner">
+                        연결관계: 경쟁사, 모바일 생태계 파트너
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽 패널 -->
+            <div class="right-panel">
+                <!-- 포트폴리오 섹션 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span data-ko="💼 내 포트폴리오" data-en="💼 My Portfolio">💼 내 포트폴리오</span>
+                        <a href="#" class="section-link" data-ko="전체보기 →" data-en="View all →">전체보기 →</a>
+                    </div>
+                    
+                    <div class="portfolio-summary">
+                        <div class="portfolio-value">₩9,847,320</div>
+                        <div class="portfolio-change">-1.53% (-152,680원)</div>
+                    </div>
+
+                    <div class="portfolio-item">
+                        <div class="item-info">
+                            <div class="item-symbol">AAPL</div>
+                            <div class="item-shares" data-ko="10주" data-en="10 shares">10주</div>
+                        </div>
+                        <div class="item-value">
+                            <div class="item-price">$1,892</div>
+                            <div class="item-change price-up">+2.1%</div>
+                        </div>
+                    </div>
+
+                    <div class="portfolio-item">
+                        <div class="item-info">
+                            <div class="item-symbol">MSFT</div>
+                            <div class="item-shares" data-ko="5주" data-en="5 shares">5주</div>
+                        </div>
+                        <div class="item-value">
+                            <div class="item-price">$1,711</div>
+                            <div class="item-change price-down">-1.2%</div>
+                        </div>
+                    </div>
+
+                    <button class="trade-button" data-ko="💹 거래하기" data-en="💹 Trade">💹 거래하기</button>
+                    
+                    <div class="quick-links">
+                        <div class="link-row">
+                            <a href="#" class="quick-link" data-ko="📈 거래 내역" data-en="📈 Trade History">📈 거래 내역</a>
+                            <a href="#" class="quick-link" data-ko="📊 성과 분석" data-en="📊 Performance">📊 성과 분석</a>
+                        </div>
+                        <div class="link-row">
+                            <a href="#" class="quick-link" data-ko="🏆 순위: #247" data-en="🏆 Rank: #247">🏆 순위: #247</a>
+                            <a href="#" class="quick-link" data-ko="🎯 목표 설정" data-en="🎯 Set Goals">🎯 목표 설정</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 게임화 요소 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span data-ko="🏆 성과" data-en="🏆 Progress">🏆 성과</span>
+                    </div>
+                    
+                    <div class="level-progress">
+                        <div class="level-info" data-ko="레벨: 초보 투자자" data-en="Level: Novice Trader">레벨: 초보 투자자</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="progress-text" data-ko="다음 레벨까지 35%" data-en="35% to next level">다음 레벨까지 35%</div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #94a3b8;">
+                        <span data-ko="🎖️ 배지: 3개" data-en="🎖️ Badges: 3">🎖️ 배지: 3개</span>
+                        <a href="#" class="section-link" data-ko="전체보기 →" data-en="View all →">전체보기 →</a>
+                    </div>
+                    
+                    <div class="badges">
+                        <span class="badge" data-ko="🥉 첫 거래" data-en="🥉 First Trade">🥉 첫 거래</span>
+                        <span class="badge" data-ko="📈 수익 달성" data-en="📈 Profit">📈 수익 달성</span>
+                        <span class="badge" data-ko="📚 학습 완료" data-en="📚 Learner">📚 학습 완료</span>
+                    </div>
+                </div>
+
+                <!-- 관련 뉴스 섹션 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span data-ko="📰 관련 뉴스" data-en="📰 Related News">📰 관련 뉴스</span>
+                        <a href="#" class="section-link" data-ko="더보기 →" data-en="More →">더보기 →</a>
+                    </div>
+
+                    <div class="news-item sentiment-positive">
+                        <div class="news-title" data-ko="애플 4분기 실적 예상치 상회" data-en="Apple Q4 Earnings Beat Expectations">애플 4분기 실적 예상치 상회</div>
+                        <div class="news-meta">
+                            <span>Reuters</span>
+                            <span data-ko="+88% 긍정" data-en="+88% Positive">+88% 긍정</span>
+                        </div>
+                    </div>
+
+                    <div class="news-item sentiment-negative">
+                        <div class="news-title" data-ko="아이폰 15 중국 판매량 하락" data-en="iPhone 15 Sales Drop in China Market">아이폰 15 중국 판매량 하락</div>
+                        <div class="news-meta">
+                            <span>Bloomberg</span>
+                            <span data-ko="-72% 부정" data-en="-72% Negative">-72% 부정</span>
+                        </div>
+                    </div>
+
+                    <div class="news-item sentiment-positive">
+                        <div class="news-title" data-ko="AI 칩 개발 가속화 발표" data-en="AI Chip Development Accelerated">AI 칩 개발 가속화 발표</div>
+                        <div class="news-meta">
+                            <span>TechCrunch</span>
+                            <span data-ko="+91% 긍정" data-en="+91% Positive">+91% 긍정</span>
+                        </div>
+                    </div>
+
+                    <div class="news-item sentiment-neutral">
+                        <div class="news-title" data-ko="신형 맥북 프로 출시 예정" data-en="New MacBook Pro Launch Expected">신형 맥북 프로 출시 예정</div>
+                        <div class="news-meta">
+                            <span>9to5Mac</span>
+                            <span data-ko="65% 중립" data-en="65% Neutral">65% 중립</span>
+                        </div>
+                    </div>
+                    
+                    <!-- AI 예측 섹션 (V2.0 준비) -->
+                    <div class="ai-preview">
+                        <h4>
+                            <span>🔮</span> <span data-ko="AI 예측 (곧 출시!)" data-en="AI Prediction (Coming Soon!)">AI 예측 (곧 출시!)</span>
+                        </h4>
+                        <div class="prediction" data-ko="AAPL 7일 예측" data-en="AAPL 7-day forecast">AAPL 7일 예측</div>
+                        <div class="confidence" data-ko="📈 73% 상승 확률" data-en="📈 73% Bullish Probability">📈 73% 상승 확률</div>
+                        <div class="disclaimer" data-ko="*V2.0에서 제공 예정" data-en="*Available in V2.0">*V2.0에서 제공 예정</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/main_dashboard.js"></script>
+</body>
+</html>
