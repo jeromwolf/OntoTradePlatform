@@ -52,7 +52,7 @@ export interface Transaction {
   id: string;
   userId: string;
   symbol: string;
-  type: 'BUY' | 'SELL';
+  type: "BUY" | "SELL";
   quantity: number;
   price: number;
   total: number;
@@ -70,13 +70,13 @@ export interface Simulation {
   currentBalance: number;
   totalReturn: number;
   totalReturnPercent: number;
-  status: 'ACTIVE' | 'COMPLETED' | 'PAUSED';
+  status: "ACTIVE" | "COMPLETED" | "PAUSED";
   isPublic: boolean;
   createdAt: string;
 }
 
 export interface Language {
-  code: 'ko' | 'en';
+  code: "ko" | "en";
   name: string;
   flag: string;
 }

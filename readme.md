@@ -1,4 +1,4 @@
-# OntoTradePlatform 
+# OntoTradePlatform
 
 > **온톨로지 기반 지식 그래프를 활용한 혁신적인 투자 시뮬레이션 플랫폼**
 
@@ -11,7 +11,7 @@
 
 ## 프로젝트 개요
 
-OntoTradePlatform은 온톨로지 기반 지식 그래프를 활용하여 투자 결정 과정을 혁신하는 차세대 투자 시뮬레이션 플랫폼입니다. 
+OntoTradePlatform은 온톨로지 기반 지식 그래프를 활용하여 투자 결정 과정을 혁신하는 차세대 투자 시뮬레이션 플랫폼입니다.
 
 ### 핵심 가치 제안
 - **데이터 기반 투자**: 방대한 지식 그래프로 투자 결정 지원
@@ -23,21 +23,43 @@ OntoTradePlatform은 온톨로지 기반 지식 그래프를 활용하여 투자
 
 ### 완료된 태스크 (Phase 1)
 
-#### 프로젝트 인프라 구축 (완료)
+#### 1. 프로젝트 인프라 구축 ✅
 - **1.1** 프론트엔드 프로젝트 초기화 (React 18 + Vite + TypeScript)
 - **1.2** 백엔드 프로젝트 설정 (FastAPI + Python 3.11)
 - **1.3** 코드 스타일 및 품질 도구 구성 (ESLint, Prettier, Black, isort)
 - **1.4** CI/CD 파이프라인 구축 (GitHub Actions, Vercel, Railway)
 - **1.5** 모니터링 및 분석 도구 통합 (Sentry, PostHog)
 
+#### 2. 인증 시스템 구현 ✅
+- **2.1** Supabase 프로젝트 설정 및 인증 구성 ✅
+- **2.2** 사용자 등록 및 로그인 기능 구현 ✅
+- **2.3** OAuth2 소셜 로그인 구현 (부분 완료 - 설정만)
+- **2.4** 보안 기능 강화 ✅
+- **2.5** 사용자 관리 기능 개발 ✅
+
+### 핵심 기능 현황
+
+#### 🔐 인증 시스템
+- ✅ **이메일/비밀번호 인증**: 회원가입, 로그인, 로그아웃
+- ✅ **보안 세션 관리**: JWT 토큰 기반 인증
+- ✅ **보호된 라우트**: 인증 필요 페이지 보호
+- ✅ **사용자 프로필**: 프로필 조회, 편집, 자동 생성
+- ⚠️ **OAuth 소셜 로그인**: Google/Facebook (설정 완료, 테스트 대기)
+
+#### 🛡️ 보안 기능
+- ✅ **Supabase Auth**: 산업 표준 인증 시스템
+- ✅ **Row Level Security (RLS)**: 데이터베이스 레벨 보안
+- ✅ **자동 프로필 생성**: PostgreSQL 트리거 기반
+- ✅ **세션 상태 관리**: React Context 기반
+
 ### 진행 예정 태스크
 
-#### 인증 시스템 구현 (다음 단계)
-- **2.1** Supabase 프로젝트 설정 및 인증 구성
-- **2.2** 사용자 등록 및 로그인 기능 구현
-- **2.3** OAuth2 소셜 로그인 구현
-- **2.4** 보안 기능 강화
-- **2.5** 사용자 관리 기능 개발
+#### 3. 핵심 UI 컴포넌트 개발 (다음 단계)
+- **3.1** 기본 폼 컴포넌트 개발
+- **3.2** 네비게이션 및 레이아웃 컴포넌트
+- **3.3** 데이터 표시 컴포넌트
+- **3.4** 피드백 및 알림 컴포넌트
+- **3.5** 컴포넌트 문서화 및 스토리북 통합
 
 ## 기술 스택
 
@@ -85,11 +107,26 @@ cd OntoTradePlatform
 ```
 
 ### 2. 환경 변수 설정
+
+#### 프론트엔드 (.env)
 ```bash
-# 루트 디렉토리에 .env 파일 생성
-cp .env.example .env
-# 필요한 환경 변수들을 설정하세요
+cd frontend
+# .env 파일 생성
+touch .env
 ```
+```env
+VITE_API_URL=http://localhost:8000
+VITE_SUPABASE_URL=your-supabase-project-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_POSTHOG_KEY=your-posthog-project-key
+VITE_SENTRY_DSN=your-sentry-dsn
+```
+
+#### Supabase 설정
+1. [Supabase](https://supabase.com)에서 새 프로젝트 생성
+2. SQL Editor에서 `database/create_profiles_table.sql` 실행
+3. Authentication > Settings에서 "Confirm email" 비활성화
+4. Settings > API에서 URL과 anon key 복사하여 환경 변수에 설정
 
 ### 3. 프론트엔드 설정
 ```bash
@@ -191,6 +228,13 @@ pytest            # 테스트 실행
 
 ## 최근 업데이트
 
+### v1.1.0 (2025-06-07)
+- **인증 시스템 완료**: Supabase Auth 기반 완전한 인증 시스템 구현
+- **사용자 프로필 관리**: 프로필 CRUD, 자동 생성, RLS 보안 정책
+- **세션 관리**: JWT 토큰 기반 안전한 세션 관리
+- **보호된 라우트**: 인증 필요 페이지 접근 제어
+- **데이터베이스 스키마**: profiles 테이블, 스토리지 버킷, PostgreSQL 트리거
+
 ### v1.0.0 (2025-06-07)
 - 프로젝트 초기 인프라 구축 완료
 - React 18 + Vite 프론트엔드 설정
@@ -209,4 +253,4 @@ pytest            # 테스트 실행
 
 ---
 
-**OntoTradePlatform** - 투자의 미래를 함께 만들어갑니다 
+**OntoTradePlatform** - 투자의 미래를 함께 만들어갑니다

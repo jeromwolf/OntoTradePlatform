@@ -2,22 +2,22 @@
  * PostHog 사용자 분석 설정
  */
 
-import posthog from 'posthog-js';
+import posthog from "posthog-js";
 
 /**
  * PostHog 초기화
  */
 export function initPostHog() {
   if (!import.meta.env.VITE_POSTHOG_KEY) {
-    console.warn('PostHog API 키가 설정되지 않았습니다.');
+    console.warn("PostHog API 키가 설정되지 않았습니다.");
     return;
   }
 
   posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-    api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com',
+    api_host: import.meta.env.VITE_POSTHOG_HOST || "https://app.posthog.com",
 
     // 개발 환경에서는 추적 비활성화
-    disabled: import.meta.env.VITE_APP_ENV === 'development',
+    disabled: import.meta.env.VITE_APP_ENV === "development",
 
     // 자동 캡처 설정
     autocapture: true,
@@ -26,7 +26,7 @@ export function initPostHog() {
 
     // 세션 녹화 설정 (프로덕션에서만)
     session_recording: {
-      enabled: import.meta.env.VITE_APP_ENV === 'production',
+      enabled: import.meta.env.VITE_APP_ENV === "production",
       maskAllInputs: true,
       maskAllText: false,
       recordCrossOriginIframes: false,
@@ -37,14 +37,14 @@ export function initPostHog() {
     opt_out_capturing_by_default: false,
 
     // 로드된 라이브러리 확인
-    loaded: posthog => {
-      if (import.meta.env.VITE_APP_ENV === 'development') {
+    loaded: (posthog) => {
+      if (import.meta.env.VITE_APP_ENV === "development") {
         posthog.debug();
       }
     },
   });
 
-  console.log('PostHog 초기화 완료');
+  console.log("PostHog 초기화 완료");
 }
 
 /**
@@ -52,9 +52,9 @@ export function initPostHog() {
  */
 export function trackPageView(
   pageName: string,
-  properties?: Record<string, any>
+  properties?: Record<string, any>,
 ) {
-  posthog.capture('$pageview', {
+  posthog.capture("$pageview", {
     $current_url: window.location.href,
     page_name: pageName,
     ...properties,
@@ -66,7 +66,7 @@ export function trackPageView(
  */
 export function trackEvent(
   eventName: string,
-  properties?: Record<string, any>
+  properties?: Record<string, any>,
 ) {
   posthog.capture(eventName, properties);
 }
@@ -76,7 +76,7 @@ export function trackEvent(
  */
 export function identifyUser(
   userId: string,
-  userProperties?: Record<string, any>
+  userProperties?: Record<string, any>,
 ) {
   posthog.identify(userId, userProperties);
 }
@@ -101,7 +101,7 @@ export function getFeatureFlag(flagKey: string): boolean | string {
 export function setGroup(
   groupType: string,
   groupKey: string,
-  groupProperties?: Record<string, any>
+  groupProperties?: Record<string, any>,
 ) {
   posthog.group(groupType, groupKey, groupProperties);
 }
@@ -111,40 +111,40 @@ export function setGroup(
  */
 export const analytics = {
   // 인증 관련
-  trackSignUp: (method: string) => trackEvent('user_signed_up', { method }),
-  trackSignIn: (method: string) => trackEvent('user_signed_in', { method }),
-  trackSignOut: () => trackEvent('user_signed_out'),
+  trackSignUp: (method: string) => trackEvent("user_signed_up", { method }),
+  trackSignIn: (method: string) => trackEvent("user_signed_in", { method }),
+  trackSignOut: () => trackEvent("user_signed_out"),
 
   // 온톨로지 관련
   trackOntologyCreated: (ontologyType: string) =>
-    trackEvent('ontology_created', { ontology_type: ontologyType }),
+    trackEvent("ontology_created", { ontology_type: ontologyType }),
   trackOntologyViewed: (ontologyId: string) =>
-    trackEvent('ontology_viewed', { ontology_id: ontologyId }),
+    trackEvent("ontology_viewed", { ontology_id: ontologyId }),
   trackOntologyShared: (ontologyId: string, method: string) =>
-    trackEvent('ontology_shared', { ontology_id: ontologyId, method }),
+    trackEvent("ontology_shared", { ontology_id: ontologyId, method }),
 
   // 거래 관련
   trackTradeInitiated: (tradeType: string, amount: number) =>
-    trackEvent('trade_initiated', { trade_type: tradeType, amount }),
+    trackEvent("trade_initiated", { trade_type: tradeType, amount }),
   trackTradeCompleted: (tradeId: string, amount: number) =>
-    trackEvent('trade_completed', { trade_id: tradeId, amount }),
+    trackEvent("trade_completed", { trade_id: tradeId, amount }),
 
   // 검색 관련
   trackSearch: (query: string, resultsCount: number) =>
-    trackEvent('search_performed', { query, results_count: resultsCount }),
+    trackEvent("search_performed", { query, results_count: resultsCount }),
   trackFilterUsed: (filterType: string, filterValue: string) =>
-    trackEvent('filter_used', {
+    trackEvent("filter_used", {
       filter_type: filterType,
       filter_value: filterValue,
     }),
 
   // UI 인터랙션
   trackButtonClick: (buttonName: string, location: string) =>
-    trackEvent('button_clicked', { button_name: buttonName, location }),
+    trackEvent("button_clicked", { button_name: buttonName, location }),
   trackModalOpened: (modalName: string) =>
-    trackEvent('modal_opened', { modal_name: modalName }),
+    trackEvent("modal_opened", { modal_name: modalName }),
   trackFormSubmitted: (formName: string) =>
-    trackEvent('form_submitted', { form_name: formName }),
+    trackEvent("form_submitted", { form_name: formName }),
 };
 
 /**

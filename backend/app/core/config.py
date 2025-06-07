@@ -1,6 +1,6 @@
 """OntoTrade 백엔드 애플리케이션 설정 모듈."""
 
-from typing import List, Union
+from typing import List, Union, Optional
 
 from pydantic import validator
 from pydantic_settings import BaseSettings
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # 애플리케이션 기본 설정
     PROJECT_NAME: str = "OntoTrade API"
     VERSION: str = "1.0.0"
-    DEBUG: bool = False
+    DEBUG: Optional[bool] = False
 
     # 서버 설정 (개발용으로 localhost 사용)
     HOST: str = "127.0.0.1"
@@ -55,6 +55,15 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
     UPLOAD_FOLDER: str = "uploads"
 
+    @validator("DEBUG", pre=True)
+    def parse_debug(cls, v) -> bool:
+        """DEBUG 값을 불린으로 파싱합니다."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes", "on")
+        return False
+
     @validator("ALLOWED_HOSTS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         """CORS 허용 목록을 검증하고 설정합니다."""
@@ -69,6 +78,7 @@ class Settings(BaseSettings):
 
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # 추가 환경변수 무시
 
 
 # 전역 설정 인스턴스

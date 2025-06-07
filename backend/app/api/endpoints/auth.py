@@ -40,10 +40,7 @@ async def login(credentials: UserLogin):
     # TODO: 실제 인증 로직 구현 (Supabase 연동)
 
     # 임시 모의 응답
-    if (
-        credentials.email == TEST_EMAIL
-        and credentials.password == TEST_PASSWORD
-    ):
+    if credentials.email == TEST_EMAIL and credentials.password == TEST_PASSWORD:
         return Token(
             access_token=MOCK_ACCESS_TOKEN,
             refresh_token=MOCK_REFRESH_TOKEN,

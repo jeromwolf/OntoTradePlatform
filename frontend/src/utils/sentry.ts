@@ -2,20 +2,20 @@
  * Sentry 에러 추적 설정
  */
 
-import * as Sentry from '@sentry/react';
+import * as Sentry from "@sentry/react";
 
 /**
  * Sentry 초기화
  */
 export function initSentry() {
   if (!import.meta.env.VITE_SENTRY_DSN) {
-    console.warn('Sentry DSN이 설정되지 않았습니다.');
+    console.warn("Sentry DSN이 설정되지 않았습니다.");
     return;
   }
 
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
-    environment: import.meta.env.VITE_APP_ENV || 'development',
+    environment: import.meta.env.VITE_APP_ENV || "development",
     integrations: [
       Sentry.browserTracingIntegration({
         // 페이지 로드 및 네비게이션 추적
@@ -23,23 +23,23 @@ export function initSentry() {
       }),
       Sentry.replayIntegration({
         // 세션 리플레이 (프로덕션에서만)
-        maskAllText: import.meta.env.VITE_APP_ENV === 'production',
-        blockAllMedia: import.meta.env.VITE_APP_ENV === 'production',
+        maskAllText: import.meta.env.VITE_APP_ENV === "production",
+        blockAllMedia: import.meta.env.VITE_APP_ENV === "production",
       }),
     ],
 
     // 성능 모니터링
-    tracesSampleRate: import.meta.env.VITE_APP_ENV === 'production' ? 0.1 : 1.0,
+    tracesSampleRate: import.meta.env.VITE_APP_ENV === "production" ? 0.1 : 1.0,
 
     // 세션 리플레이 샘플링
     replaysSessionSampleRate:
-      import.meta.env.VITE_APP_ENV === 'production' ? 0.1 : 1.0,
+      import.meta.env.VITE_APP_ENV === "production" ? 0.1 : 1.0,
     replaysOnErrorSampleRate: 1.0,
 
     // 민감한 정보 필터링
     beforeSend(event) {
       // 개발 환경에서는 모든 이벤트 허용
-      if (import.meta.env.VITE_APP_ENV !== 'production') {
+      if (import.meta.env.VITE_APP_ENV !== "production") {
         return event;
       }
 
@@ -47,8 +47,8 @@ export function initSentry() {
       if (event.exception) {
         const error = event.exception.values?.[0];
         if (
-          error?.value?.includes('password') ||
-          error?.value?.includes('token')
+          error?.value?.includes("password") ||
+          error?.value?.includes("token")
         ) {
           return null; // 민감한 정보가 포함된 에러는 전송하지 않음
         }
@@ -60,21 +60,21 @@ export function initSentry() {
     // 에러 메시지 태그 추가
     initialScope: {
       tags: {
-        component: 'frontend',
+        component: "frontend",
       },
     },
   });
 
-  console.log('Sentry 초기화 완료');
+  console.log("Sentry 초기화 완료");
 }
 
 /**
  * 커스텀 에러 리포팅
  */
 export function reportError(error: Error, context?: Record<string, any>) {
-  Sentry.withScope(scope => {
+  Sentry.withScope((scope) => {
     if (context) {
-      scope.setContext('additional_info', context);
+      scope.setContext("additional_info", context);
     }
     Sentry.captureException(error);
   });
@@ -98,7 +98,7 @@ export function trackEvent(event: string, data?: Record<string, any>) {
   Sentry.addBreadcrumb({
     message: event,
     data,
-    level: 'info',
+    level: "info",
   });
 }
 

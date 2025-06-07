@@ -1,106 +1,246 @@
-import { useState } from 'react';
-import './App.css';
+import React from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { LoginPage } from './pages/LoginPage'
+import { SignupPage } from './pages/SignupPage'
+import ProfilePage from './pages/ProfilePage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import ResetPasswordConfirmPage from './pages/ResetPasswordConfirmPage'
+import SessionMonitor from './components/SessionMonitor'
+import MonitoringExample from './components/MonitoringExample'
 
-function App() {
-  const [language, setLanguage] = useState<'ko' | 'en'>('ko');
+// 프로텍티드 라우트 컴포넌트
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth()
 
-  const content = {
-    ko: {
-      title: 'OntoTrade',
-      subtitle: '온톨로지 기반 투자 시뮬레이션 플랫폼',
-      welcome: 'OntoTrade에 오신 것을 환영합니다! 🎉',
-      description: '혁신적인 지식 그래프 기술로 더 스마트한 투자를 경험하세요.',
-      features: [
-        '🎯 실시간 투자 시뮬레이션',
-        '📊 온톨로지 기반 분석 도구',
-        '🏆 게임화된 학습 시스템',
-        '👥 커뮤니티 기능',
-      ],
-      getStarted: '시작하기',
-      language: '언어',
-    },
-    en: {
-      title: 'OntoTrade',
-      subtitle: 'Ontology-based Investment Simulation Platform',
-      welcome: 'Welcome to OntoTrade! 🎉',
-      description:
-        'Experience smarter investing with innovative knowledge graph technology.',
-      features: [
-        '🎯 Real-time Investment Simulation',
-        '📊 Ontology-based Analysis Tools',
-        '🏆 Gamified Learning System',
-        '👥 Community Features',
-      ],
-      getStarted: 'Get Started',
-      language: 'Language',
-    },
-  };
-
-  const t = content[language];
-
-  return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4'>
-      <div className='max-w-4xl mx-auto text-center'>
-        {/* 언어 토글 */}
-        <div className='absolute top-4 right-4 flex gap-2'>
-          <button
-            onClick={() => setLanguage('ko')}
-            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-              language === 'ko'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            한국어
-          </button>
-          <button
-            onClick={() => setLanguage('en')}
-            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-              language === 'en'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            English
-          </button>
-        </div>
-
-        {/* 메인 컨텐츠 */}
-        <div className='bg-white rounded-2xl shadow-xl p-8 md:p-12'>
-          <h1 className='text-5xl md:text-7xl font-bold text-gray-900 mb-4'>
-            {t.title}
-          </h1>
-          <p className='text-xl md:text-2xl text-gray-600 mb-8'>{t.subtitle}</p>
-
-          <div className='bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl mb-8'>
-            <h2 className='text-2xl font-bold mb-2'>{t.welcome}</h2>
-            <p className='text-blue-100'>{t.description}</p>
-          </div>
-
-          {/* 기능 목록 */}
-          <div className='grid md:grid-cols-2 gap-4 mb-8'>
-            {t.features.map((feature, index) => (
-              <div key={index} className='text-left p-4 bg-gray-50 rounded-lg'>
-                <span className='text-lg'>{feature}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* 시작하기 버튼 */}
-          <button className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg'>
-            {t.getStarted}
-          </button>
-
-          {/* 상태 표시 */}
-          <div className='mt-8 text-sm text-gray-500'>
-            <p>✅ React 18 + TypeScript + Vite</p>
-            <p>✅ Tailwind CSS</p>
-            <p>✅ Vitest 테스트 환경</p>
-          </div>
-        </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
-    </div>
-  );
+    )
+  }
+
+  return user ? <>{children}</> : <Navigate to="/login" replace />
 }
 
-export default App;
+// 메인 대시보드 컴포넌트
+const Dashboard: React.FC = () => {
+  const { user, signOut } = useAuth()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link to="/dashboard" className="text-xl font-semibold hover:text-gray-700">
+                OntoTrade Platform
+              </Link>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/profile"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
+              >
+                <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                프로필
+              </Link>
+              <span className="text-gray-700">Welcome, {user?.email}</span>
+              <button
+                onClick={signOut}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                OntoTrade Platform Dashboard
+              </h2>
+              <p className="text-gray-600 mb-8">
+                온톨로지 기반 거래 플랫폼에 오신 것을 환영합니다!
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold mb-2">포트폴리오</h3>
+                  <p className="text-gray-600">투자 포트폴리오를 관리하세요</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold mb-2">거래</h3>
+                  <p className="text-gray-600">실시간 거래를 시작하세요</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold mb-2">분석</h3>
+                  <p className="text-gray-600">시장 분석 도구를 사용하세요</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+// 퍼블릭 라우트 (로그인하지 않은 사용자용)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  return user ? <Navigate to="/dashboard" replace /> : <>{children}</>
+}
+
+// 홈페이지 컴포넌트
+const HomePage: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold">OntoTrade Platform</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/login"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md"
+              >
+                로그인
+              </Link>
+              <Link
+                to="/signup"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+              >
+                회원가입
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              OntoTrade Platform
+            </h2>
+            <p className="text-xl text-gray-600 mb-8">
+              온톨로지 기반 지능형 거래 플랫폼
+            </p>
+            <div className="space-x-4">
+              <Link
+                to="/signup"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg"
+              >
+                시작하기
+              </Link>
+              <Link
+                to="/login"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-md text-lg"
+              >
+                로그인
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <SessionMonitor />
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <PublicRoute>
+                  <HomePage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <PublicRoute>
+                  <SignupPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <PublicRoute>
+                  <ResetPasswordPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/reset-password-confirm"
+              element={
+                <PublicRoute>
+                  <ResetPasswordConfirmPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/monitoring"
+              element={
+                <ProtectedRoute>
+                  <MonitoringExample />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
+  )
+}
+
+export default App
