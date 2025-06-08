@@ -17,6 +17,10 @@ import WebSocketTestPage from "./pages/WebSocketTestPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import TradingPage from "./pages/TradingPage";
 import DashboardPage from "./pages/DashboardPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import LearningPage from "./pages/LearningPage";
+import SimulationPage from "./pages/SimulationPage";
 import SessionMonitor from "./components/SessionMonitor";
 import MonitoringExample from "./components/MonitoringExample";
 
@@ -210,6 +214,38 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WebSocketTestPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learning"
+              element={
+                <ProtectedRoute>
+                  <LearningPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/simulation"
+              element={
+                <ProtectedRoute>
+                  <SimulationPage />
                 </ProtectedRoute>
               }
             />

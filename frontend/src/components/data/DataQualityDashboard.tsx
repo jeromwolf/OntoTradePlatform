@@ -41,7 +41,9 @@ interface DataQualityReport {
 }
 
 export const DataQualityDashboard: React.FC = () => {
-  const [qualityData, setQualityData] = useState<DataQualityReport | null>(null);
+  const [qualityData, setQualityData] = useState<DataQualityReport | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -125,7 +127,10 @@ export const DataQualityDashboard: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 border rounded-lg bg-gray-50 animate-pulse">
+            <div
+              key={i}
+              className="p-4 border rounded-lg bg-gray-50 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 rounded mb-2"></div>
               <div className="h-8 bg-gray-200 rounded"></div>
             </div>
@@ -179,7 +184,11 @@ export const DataQualityDashboard: React.FC = () => {
           <Button onClick={fetchDataQuality} variant="secondary" size="sm">
             새로고침
           </Button>
-          <Button onClick={requestWebSocketDataQuality} variant="secondary" size="sm">
+          <Button
+            onClick={requestWebSocketDataQuality}
+            variant="secondary"
+            size="sm"
+          >
             실시간 요청
           </Button>
         </div>
@@ -190,7 +199,9 @@ export const DataQualityDashboard: React.FC = () => {
         <div className="p-4 border rounded-lg bg-white">
           <div className="flex items-center space-x-2 mb-2">
             <CheckCircleIcon className="h-5 w-5 text-green-500" />
-            <span className="text-sm font-medium text-gray-600">검증 성공률</span>
+            <span className="text-sm font-medium text-gray-600">
+              검증 성공률
+            </span>
           </div>
           <div className="text-2xl font-bold text-green-600">
             {overall_metrics.validation_success_rate.toFixed(1)}%
@@ -200,7 +211,9 @@ export const DataQualityDashboard: React.FC = () => {
         <div className="p-4 border rounded-lg bg-white">
           <div className="flex items-center space-x-2 mb-2">
             <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-            <span className="text-sm font-medium text-gray-600">이상치 발생률</span>
+            <span className="text-sm font-medium text-gray-600">
+              이상치 발생률
+            </span>
           </div>
           <div className="text-2xl font-bold text-yellow-600">
             {overall_metrics.anomaly_rate.toFixed(1)}%
@@ -210,7 +223,9 @@ export const DataQualityDashboard: React.FC = () => {
         <div className="p-4 border rounded-lg bg-white">
           <div className="flex items-center space-x-2 mb-2">
             <ClockIcon className="h-5 w-5 text-blue-500" />
-            <span className="text-sm font-medium text-gray-600">평균 처리시간</span>
+            <span className="text-sm font-medium text-gray-600">
+              평균 처리시간
+            </span>
           </div>
           <div className="text-2xl font-bold text-blue-600">
             {overall_metrics.average_processing_time.toFixed(2)}ms
@@ -220,7 +235,9 @@ export const DataQualityDashboard: React.FC = () => {
         <div className="p-4 border rounded-lg bg-white">
           <div className="flex items-center space-x-2 mb-2">
             <ChartBarIcon className="h-5 w-5 text-purple-500" />
-            <span className="text-sm font-medium text-gray-600">처리된 메시지</span>
+            <span className="text-sm font-medium text-gray-600">
+              처리된 메시지
+            </span>
           </div>
           <div className="text-2xl font-bold text-purple-600">
             {overall_metrics.total_messages_processed.toLocaleString()}
@@ -261,16 +278,16 @@ export const DataQualityDashboard: React.FC = () => {
                     {metric.symbol}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span className={`font-medium ${getQualityScoreColor(metric.quality_score)}`}>
+                    <span
+                      className={`font-medium ${getQualityScoreColor(metric.quality_score)}`}
+                    >
                       {metric.quality_score.toFixed(1)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {metric.validation_success_rate.toFixed(1)}%
                   </td>
-                  <td className="px-4 py-3 text-sm">
-                    {metric.anomaly_count}
-                  </td>
+                  <td className="px-4 py-3 text-sm">{metric.anomaly_count}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {new Date(metric.last_validated).toLocaleString()}
                   </td>
@@ -303,13 +320,15 @@ export const DataQualityDashboard: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="font-medium">{anomaly.symbol}</span>
-                        <span className={`px-2 py-1 text-xs rounded ${
-                          anomaly.severity === "high"
-                            ? "bg-red-100 text-red-800"
-                            : anomaly.severity === "medium"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}>
+                        <span
+                          className={`px-2 py-1 text-xs rounded ${
+                            anomaly.severity === "high"
+                              ? "bg-red-100 text-red-800"
+                              : anomaly.severity === "medium"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
                           {anomaly.severity.toUpperCase()}
                         </span>
                         <span className="text-xs text-gray-500">

@@ -117,7 +117,10 @@ class WebSocketService {
     this.subscribedSymbols.delete(symbol.toUpperCase());
   }
 
-  public getConnectionStatus(): { connected: boolean; reconnectAttempts: number } {
+  public getConnectionStatus(): {
+    connected: boolean;
+    reconnectAttempts: number;
+  } {
     return {
       connected: this.isConnected(),
       reconnectAttempts: this.reconnectAttempts,

@@ -1,9 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import websocketService from "../services/websocket";
 
 interface StockQuote {
@@ -150,7 +145,7 @@ export const useStockSubscription = (symbol: string | null) => {
  */
 export const useMultipleStockSubscriptions = (symbols: string[]) => {
   const [stocksData, setStocksData] = useState<Map<string, StockQuote>>(
-    new Map()
+    new Map(),
   );
   const [errors, setErrors] = useState<string[]>([]);
   const { isConnected, subscribe, unsubscribe } = useWebSocket();
@@ -166,10 +161,10 @@ export const useMultipleStockSubscriptions = (symbols: string[]) => {
 
     // 변경된 심볼들 계산
     const removedSymbols = previousSymbols.filter(
-      (symbol) => !currentSymbols.includes(symbol)
+      (symbol) => !currentSymbols.includes(symbol),
     );
     const newSymbols = currentSymbols.filter(
-      (symbol) => !previousSymbols.includes(symbol)
+      (symbol) => !previousSymbols.includes(symbol),
     );
 
     // 제거된 심볼들 처리
@@ -194,8 +189,8 @@ export const useMultipleStockSubscriptions = (symbols: string[]) => {
     const stockUpdateCallback = (updateData: any) => {
       const symbol = updateData.symbol?.toUpperCase();
       if (symbols.some((s) => s.toUpperCase() === symbol)) {
-        setStocksData((prev) =>
-          new Map(prev.set(symbol, updateData.data || updateData))
+        setStocksData(
+          (prev) => new Map(prev.set(symbol, updateData.data || updateData)),
         );
       }
     };
@@ -218,7 +213,7 @@ export const useMultipleStockSubscriptions = (symbols: string[]) => {
     (symbol: string): StockQuote | null => {
       return stocksData.get(symbol.toUpperCase()) || null;
     },
-    [stocksData]
+    [stocksData],
   );
 
   const clearErrors = useCallback(() => {

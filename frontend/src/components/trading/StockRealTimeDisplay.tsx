@@ -99,8 +99,8 @@ export const StockRealTimeDisplay: React.FC<StockRealTimeDisplayProps> = ({
         <div className="flex items-center space-x-4 text-sm">
           <span className={changeColor}>
             {stockData.change > 0 ? "+" : ""}
-            {stockData.change.toFixed(2)} (
-            {stockData.change_percent.toFixed(2)}%)
+            {stockData.change.toFixed(2)} ({stockData.change_percent.toFixed(2)}
+            %)
           </span>
 
           {priceChange.amount !== 0 && (
@@ -211,9 +211,7 @@ export const MultiStockDisplay: React.FC<MultiStockDisplayProps> = ({
     <div className={`space-y-4 ${className}`}>
       {errors.length > 0 && (
         <div className="p-3 bg-red-50 border border-red-200 rounded">
-          <p className="text-sm text-red-600">
-            오류: {errors.join(", ")}
-          </p>
+          <p className="text-sm text-red-600">오류: {errors.join(", ")}</p>
         </div>
       )}
 
