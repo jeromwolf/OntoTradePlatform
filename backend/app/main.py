@@ -1,15 +1,19 @@
 """OntoTrade 백엔드 메인 애플리케이션 모듈."""
 
+import socketio
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import socketio
 
+from app.api.endpoints import portfolio_holdings, portfolios
 from app.core.config import settings
 from app.core.monitoring import init_sentry
-from app.core.websocket_simple import websocket_manager, start_websocket_updates, ws_router
-from app.api.endpoints import portfolios, portfolio_holdings
+from app.core.websocket_simple import (
+    start_websocket_updates,
+    websocket_manager,
+    ws_router,
+)
 
 
 def create_app() -> FastAPI:
@@ -39,6 +43,7 @@ def create_app() -> FastAPI:
 
 # FastAPI 앱 인스턴스 생성
 app = create_app()
+
 
 # 앱 시작 시 WebSocket 업데이트 시작
 @app.on_event("startup")
@@ -80,10 +85,12 @@ app.include_router(ws_router)
 
 # 포트폴리오 API 라우터 포함
 app.include_router(portfolios.router, prefix="/api/portfolios", tags=["portfolios"])
-app.include_router(portfolio_holdings.router, prefix="/api/portfolios", tags=["portfolio-holdings"])
+app.include_router(
+    portfolio_holdings.router, prefix="/api/portfolios", tags=["portfolio-holdings"]
+)
 
 # Socket.IO와 FastAPI를 결합한 ASGI 앱 생성
-socket_app = socketio.ASGIApp(websocket_manager.sio, app, socketio_path='/socket.io')
+socket_app = socketio.ASGIApp(websocket_manager.sio, app, socketio_path="/socket.io")
 
 if __name__ == "__main__":
     uvicorn.run(

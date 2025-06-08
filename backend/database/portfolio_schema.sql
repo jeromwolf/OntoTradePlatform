@@ -153,12 +153,12 @@ END;
 $$ language 'plpgsql';
 
 -- 트리거: portfolios와 portfolio_settings 테이블에 updated_at 자동 갱신 적용
-CREATE TRIGGER IF NOT EXISTS update_portfolios_updated_at 
-    BEFORE UPDATE ON portfolios 
+CREATE TRIGGER IF NOT EXISTS update_portfolios_updated_at
+    BEFORE UPDATE ON portfolios
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_portfolio_settings_updated_at 
-    BEFORE UPDATE ON portfolio_settings 
+CREATE TRIGGER IF NOT EXISTS update_portfolio_settings_updated_at
+    BEFORE UPDATE ON portfolio_settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- 함수: 포트폴리오 생성 시 기본 설정 자동 생성
@@ -194,7 +194,7 @@ BEGIN
     SELECT quantity, average_price INTO current_quantity, current_avg_price
     FROM portfolio_holdings
     WHERE portfolio_id = p_portfolio_id AND symbol = p_symbol;
-    
+
     IF NOT FOUND THEN
         -- 새로운 종목인 경우
         IF p_quantity_change > 0 THEN
@@ -204,7 +204,7 @@ BEGIN
     ELSE
         -- 기존 종목인 경우
         new_quantity := current_quantity + p_quantity_change;
-        
+
         IF new_quantity = 0 THEN
             -- 보유량이 0이 되면 삭제
             DELETE FROM portfolio_holdings
@@ -216,7 +216,7 @@ BEGIN
             ELSE
                 new_avg_price := current_avg_price; -- 매도시에는 평균단가 유지
             END IF;
-            
+
             UPDATE portfolio_holdings
             SET quantity = new_quantity,
                 average_price = new_avg_price,

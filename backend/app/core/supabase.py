@@ -1,6 +1,7 @@
 """Supabase 클라이언트 설정 및 인증 유틸리티."""
 
 import os
+
 from dotenv import load_dotenv
 
 # .env 파일을 명시적으로 로드

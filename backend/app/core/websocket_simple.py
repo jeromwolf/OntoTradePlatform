@@ -23,7 +23,7 @@ from app.core.logging_system import (
 from app.core.monitoring import add_breadcrumb, capture_message
 from app.services.data_normalizer import data_normalizer
 from app.services.data_validator import DataSource
-from app.services.stock_simulator import StockDataSimulator  
+from app.services.stock_simulator import StockDataSimulator
 
 # 기존 logging 설정 제거하고 새로운 시스템 사용
 # logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class WebsocketManager:
             cors_allowed_origins="*",
             logger=False,  # 기본 로거 비활성화
             engineio_logger=False,
-            async_mode='asgi',  # ASGI 모드 명시적 지정
+            async_mode="asgi",  # ASGI 모드 명시적 지정
         )
 
         # 구독 관리
@@ -44,7 +44,7 @@ class WebsocketManager:
         self.session_symbols: Dict[str, Set[str]] = {}  # session_id -> set of symbols
 
         # 주식 시뮬레이터
-        self.stock_simulator = StockDataSimulator()  
+        self.stock_simulator = StockDataSimulator()
 
         # 이벤트 핸들러 등록
         self._register_events()
@@ -125,9 +125,7 @@ class WebsocketManager:
                 async with circuit_breaker("websocket") as protected_call:
                     await protected_call(self._subscribe_symbol, sid, symbol)
 
-                log_websocket_event(
-                    "symbol_subscribed"
-                )
+                log_websocket_event("symbol_subscribed")
 
             except Exception as e:
                 log_error(
@@ -157,9 +155,7 @@ class WebsocketManager:
 
                 await self._unsubscribe_symbol(sid, symbol)
 
-                log_websocket_event(
-                    "symbol_unsubscribed"
-                )
+                log_websocket_event("symbol_unsubscribed")
 
             except Exception as e:
                 log_error(
@@ -179,9 +175,7 @@ class WebsocketManager:
                     room=sid,
                 )
 
-                log_websocket_event(
-                    "subscriptions_requested"
-                )
+                log_websocket_event("subscriptions_requested")
 
             except Exception as e:
                 log_error(
@@ -197,9 +191,7 @@ class WebsocketManager:
                 quality_report = data_normalizer.get_quality_report()
                 await self.sio.emit("data_quality", quality_report, room=sid)
 
-                log_websocket_event(
-                    "data_quality_requested"
-                )
+                log_websocket_event("data_quality_requested")
 
             except Exception as e:
                 log_error(
@@ -225,7 +217,11 @@ class WebsocketManager:
                 validation_result = data_normalizer.normalize_and_validate(
                     symbol, stock_data, DataSource.MOCK
                 )
-                normalized_data = validation_result.normalized_data if validation_result.is_valid else stock_data
+                normalized_data = (
+                    validation_result.normalized_data
+                    if validation_result.is_valid
+                    else stock_data
+                )
 
                 await self.sio.emit(
                     "stock_data",
@@ -310,7 +306,11 @@ class WebsocketManager:
             validation_result = data_normalizer.normalize_and_validate(
                 symbol, stock_data, DataSource.MOCK
             )
-            normalized_data = validation_result.normalized_data if validation_result.is_valid else stock_data
+            normalized_data = (
+                validation_result.normalized_data
+                if validation_result.is_valid
+                else stock_data
+            )
 
             # 이상치 탐지 결과 확인
             anomalies = normalized_data.get("anomalies", [])
@@ -332,7 +332,9 @@ class WebsocketManager:
                                 "symbol": symbol,
                                 "data": normalized_data,
                                 "timestamp": datetime.now().isoformat(),
-                                "quality_score": normalized_data.get("quality_score", 0),
+                                "quality_score": normalized_data.get(
+                                    "quality_score", 0
+                                ),
                             },
                             room=sid,
                         )
@@ -395,21 +397,25 @@ def get_websocket_stats():
 # Socket.IO ASGI 앱 생성
 sio_asgi_app = socketio.ASGIApp(websocket_manager.sio)
 
+
 # WebSocket 자동 시작 함수
 async def start_websocket_updates():
     """WebSocket 자동 업데이트 시작"""
     await websocket_manager.start_auto_updates()
     log_info("WebSocket 자동 업데이트 시작됨")
 
-# Socket.IO 앱을 얻는 함수  
+
+# Socket.IO 앱을 얻는 함수
 def get_socket_app():
     """Socket.IO ASGI 앱을 반환"""
     return sio_asgi_app
+
 
 # WebSocket 관련 FastAPI 라우트들
 from fastapi import APIRouter
 
 ws_router = APIRouter()
+
 
 @ws_router.get("/ws/stats")
 async def websocket_stats():

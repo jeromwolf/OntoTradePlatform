@@ -19,13 +19,15 @@ def apply_schema_simple():
     """포트폴리오 스키마를 간단하게 적용합니다."""
     print("🚀 OntoTradePlatform 포트폴리오 스키마 설정 (간단 버전)")
     print("=" * 60)
-    
+
     try:
         print("🚀 Supabase 연결 테스트...")
         # 연결 테스트
-        result = supabase_client.client.table('profiles').select('id').limit(1).execute()
+        result = (
+            supabase_client.client.table("profiles").select("id").limit(1).execute()
+        )
         print("✅ Supabase 연결 성공")
-        
+
         # 스키마 SQL 직접 정의 (핵심 테이블만)
         schema_sql = """
         -- 1. portfolios 테이블
@@ -42,7 +44,7 @@ def apply_schema_simple():
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             is_active BOOLEAN DEFAULT TRUE
         );
-        
+
         -- 2. portfolio_holdings 테이블
         CREATE TABLE IF NOT EXISTS portfolio_holdings (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,7 +60,7 @@ def apply_schema_simple():
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             UNIQUE(portfolio_id, symbol)
         );
-        
+
         -- 3. transactions 테이블
         CREATE TABLE IF NOT EXISTS transactions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,19 +74,23 @@ def apply_schema_simple():
             executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-        
+
         -- RLS 활성화
         ALTER TABLE portfolios ENABLE ROW LEVEL SECURITY;
         ALTER TABLE portfolio_holdings ENABLE ROW LEVEL SECURITY;
         ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
         """
-        
+
         print("🚀 스키마 적용 중...")
         # Supabase SQL Editor와 동일한 방식으로 실행
-        result = supabase_client.client.postgrest.schema('public').rpc('query', {'query': schema_sql}).execute()
-        
+        result = (
+            supabase_client.client.postgrest.schema("public")
+            .rpc("query", {"query": schema_sql})
+            .execute()
+        )
+
         print("✅ 기본 테이블 생성 완료")
-        
+
         # RLS 정책 적용
         rls_policies = [
             """
@@ -102,44 +108,53 @@ def apply_schema_simple():
             """
             CREATE POLICY IF NOT EXISTS "Users can delete own portfolios" ON portfolios
                 FOR DELETE USING (auth.uid() = user_id);
-            """
+            """,
         ]
-        
+
         print("🚀 RLS 정책 적용 중...")
         for i, policy in enumerate(rls_policies):
             try:
-                result = supabase_client.client.postgrest.schema('public').rpc('query', {'query': policy}).execute()
+                result = (
+                    supabase_client.client.postgrest.schema("public")
+                    .rpc("query", {"query": policy})
+                    .execute()
+                )
                 print(f"✅ RLS 정책 {i+1}/{len(rls_policies)} 적용 완료")
             except Exception as e:
                 print(f"⚠️ RLS 정책 {i+1} 적용 실패: {e}")
-        
+
         # 테이블 존재 확인
         print("🔍 테이블 생성 확인 중...")
-        expected_tables = ['portfolios', 'portfolio_holdings', 'transactions']
+        expected_tables = ["portfolios", "portfolio_holdings", "transactions"]
         existing_tables = []
-        
+
         for table_name in expected_tables:
             try:
-                result = supabase_client.client.table(table_name).select("*").limit(1).execute()
+                result = (
+                    supabase_client.client.table(table_name)
+                    .select("*")
+                    .limit(1)
+                    .execute()
+                )
                 existing_tables.append(table_name)
                 print(f"✅ {table_name} 테이블 확인됨")
             except Exception as e:
                 print(f"❌ {table_name} 테이블 누락: {e}")
-        
+
         print("\n" + "=" * 60)
         print("📊 포트폴리오 스키마 설정 완료")
         print(f"✅ 생성된 테이블: {len(existing_tables)}/{len(expected_tables)}")
         print(f"📋 테이블 목록: {', '.join(existing_tables)}")
-        
+
         if len(existing_tables) == len(expected_tables):
             print("🎉 모든 포트폴리오 테이블이 성공적으로 생성되었습니다!")
             print("🚀 이제 백엔드 서버를 시작할 수 있습니다.")
         else:
             print("⚠️ 일부 테이블 생성에 실패했습니다.")
             print("🔧 Supabase Dashboard에서 수동으로 확인해주세요.")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ 포트폴리오 스키마 설정에 실패했습니다: {e}")
         print("🔧 Supabase 연결과 권한을 확인해주세요.")

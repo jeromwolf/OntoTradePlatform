@@ -3,10 +3,10 @@
 OntoTradePlatform - Task 5.1
 """
 
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, validator
 
 class RiskLevel(str, Enum):
     """위험 수준 열거형"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -21,12 +22,14 @@ class RiskLevel(str, Enum):
 
 class TransactionType(str, Enum):
     """거래 유형 열거형"""
+
     BUY = "buy"
     SELL = "sell"
 
 
 class RebalancingFrequency(str, Enum):
     """리밸런싱 주기 열거형"""
+
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
@@ -37,6 +40,7 @@ class RebalancingFrequency(str, Enum):
 # Portfolio Models
 class PortfolioBase(BaseModel):
     """포트폴리오 기본 모델"""
+
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     initial_balance: Decimal = Field(default=Decimal("1000000.00"), gt=0)
@@ -47,11 +51,13 @@ class PortfolioBase(BaseModel):
 
 class PortfolioCreate(PortfolioBase):
     """포트폴리오 생성 모델"""
+
     pass
 
 
 class PortfolioUpdate(BaseModel):
     """포트폴리오 업데이트 모델"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     risk_level: Optional[RiskLevel] = None
@@ -61,6 +67,7 @@ class PortfolioUpdate(BaseModel):
 
 class Portfolio(PortfolioBase):
     """포트폴리오 응답 모델"""
+
     id: UUID
     user_id: UUID
     current_balance: Decimal
@@ -77,6 +84,7 @@ class Portfolio(PortfolioBase):
 # Holdings Models
 class HoldingBase(BaseModel):
     """보유 종목 기본 모델"""
+
     symbol: str = Field(..., min_length=1, max_length=20)
     quantity: int = Field(..., ge=0)
     average_cost: Decimal = Field(..., gt=0)
@@ -84,17 +92,20 @@ class HoldingBase(BaseModel):
 
 class HoldingCreate(HoldingBase):
     """보유 종목 생성 모델"""
+
     portfolio_id: UUID
 
 
 class HoldingUpdate(BaseModel):
     """보유 종목 업데이트 모델"""
+
     quantity: Optional[int] = Field(None, ge=0)
     current_price: Optional[Decimal] = Field(None, gt=0)
 
 
 class Holding(HoldingBase):
     """보유 종목 응답 모델"""
+
     id: UUID
     portfolio_id: UUID
     current_price: Optional[Decimal] = None
@@ -111,6 +122,7 @@ class Holding(HoldingBase):
 # Transaction Models
 class TransactionBase(BaseModel):
     """거래 내역 기본 모델"""
+
     symbol: str = Field(..., min_length=1, max_length=20)
     transaction_type: TransactionType
     quantity: int = Field(..., gt=0)
@@ -120,11 +132,13 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     """거래 내역 생성 모델"""
+
     portfolio_id: UUID
 
 
 class Transaction(TransactionBase):
     """거래 내역 응답 모델"""
+
     id: UUID
     portfolio_id: UUID
     total_amount: Decimal
@@ -139,6 +153,7 @@ class Transaction(TransactionBase):
 # Performance Models
 class PerformanceBase(BaseModel):
     """성과 기본 모델"""
+
     date: date
     total_value: Decimal = Field(..., ge=0)
     cash_balance: Decimal = Field(..., ge=0)
@@ -147,6 +162,7 @@ class PerformanceBase(BaseModel):
 
 class PerformanceCreate(PerformanceBase):
     """성과 생성 모델"""
+
     portfolio_id: UUID
     daily_return: Optional[Decimal] = None
     cumulative_return: Optional[Decimal] = None
@@ -156,6 +172,7 @@ class PerformanceCreate(PerformanceBase):
 
 class Performance(PerformanceBase):
     """성과 응답 모델"""
+
     id: UUID
     portfolio_id: UUID
     daily_return: Optional[Decimal] = None
@@ -171,6 +188,7 @@ class Performance(PerformanceBase):
 # Settings Models
 class SettingsBase(BaseModel):
     """설정 기본 모델"""
+
     max_position_size: Decimal = Field(default=Decimal("20.00"), gt=0, le=100)
     max_sector_exposure: Decimal = Field(default=Decimal("30.00"), gt=0, le=100)
     stop_loss_threshold: Decimal = Field(default=Decimal("-10.00"), lt=0)
@@ -183,11 +201,13 @@ class SettingsBase(BaseModel):
 
 class SettingsCreate(SettingsBase):
     """설정 생성 모델"""
+
     portfolio_id: UUID
 
 
 class SettingsUpdate(BaseModel):
     """설정 업데이트 모델"""
+
     max_position_size: Optional[Decimal] = Field(None, gt=0, le=100)
     max_sector_exposure: Optional[Decimal] = Field(None, gt=0, le=100)
     stop_loss_threshold: Optional[Decimal] = Field(None, lt=0)
@@ -200,6 +220,7 @@ class SettingsUpdate(BaseModel):
 
 class Settings(SettingsBase):
     """설정 응답 모델"""
+
     id: UUID
     portfolio_id: UUID
 
@@ -210,6 +231,7 @@ class Settings(SettingsBase):
 # Response Models
 class PortfolioSummary(BaseModel):
     """포트폴리오 요약 정보"""
+
     portfolio: Portfolio
     holdings_count: int
     total_invested: Decimal
@@ -220,6 +242,7 @@ class PortfolioSummary(BaseModel):
 
 class PortfolioDetail(BaseModel):
     """포트폴리오 상세 정보"""
+
     portfolio: Portfolio
     holdings: List[Holding]
     recent_transactions: List[Transaction]
@@ -229,6 +252,7 @@ class PortfolioDetail(BaseModel):
 
 class PortfolioStats(BaseModel):
     """포트폴리오 통계"""
+
     total_portfolios: int
     total_value: Decimal
     total_return: Decimal
@@ -240,6 +264,7 @@ class PortfolioStats(BaseModel):
 # Order Models (for future implementation)
 class OrderType(str, Enum):
     """주문 유형"""
+
     MARKET = "market"
     LIMIT = "limit"
     STOP = "stop"
@@ -248,6 +273,7 @@ class OrderType(str, Enum):
 
 class OrderStatus(str, Enum):
     """주문 상태"""
+
     PENDING = "pending"
     FILLED = "filled"
     PARTIALLY_FILLED = "partially_filled"
@@ -257,6 +283,7 @@ class OrderStatus(str, Enum):
 
 class OrderBase(BaseModel):
     """주문 기본 모델"""
+
     portfolio_id: UUID
     symbol: str = Field(..., min_length=1, max_length=20)
     order_type: OrderType
@@ -268,11 +295,13 @@ class OrderBase(BaseModel):
 
 class OrderCreate(OrderBase):
     """주문 생성 모델"""
+
     pass
 
 
 class Order(OrderBase):
     """주문 응답 모델"""
+
     id: UUID
     status: OrderStatus
     filled_quantity: int = 0
