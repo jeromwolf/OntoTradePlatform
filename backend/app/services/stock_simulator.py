@@ -186,53 +186,57 @@ class StockDataSimulator:
                 self.stock_data[symbol] = mock_data
                 return mock_data
 
-    def get_all_stocks(self) -> List[Dict]:
-        """모든 주식 데이터를 반환."""
-        return list(self.stock_data.values())
-
-    async def start_simulation(self, websocket_manager=None):
+    async def start_simulation(self):
         """시뮬레이션 시작."""
         if self.is_running:
-            logger.warning("시뮬레이션이 이미 실행 중입니다.")
+            logger.info("시뮬레이션이 이미 실행 중입니다.")
             return
 
         self.is_running = True
         logger.info("주식 데이터 시뮬레이션 시작")
 
+        # 백그라운드 태스크로 실행
+        self.simulation_task = asyncio.create_task(self._run_simulation())
+
+    async def stop_simulation(self):
+        """시뮬레이션 중지."""
+        if not self.is_running:
+            logger.info("시뮬레이션이 실행 중이 아닙니다.")
+            return
+
+        self.is_running = False
+        
+        if self.simulation_task:
+            self.simulation_task.cancel()
+            try:
+                await self.simulation_task
+            except asyncio.CancelledError:
+                pass
+            
+        logger.info("주식 데이터 시뮬레이션 중지")
+
+    async def _run_simulation(self):
+        """시뮬레이션 백그라운드 실행."""
         try:
             while self.is_running:
-                # 활성 구독이 있는 주식들만 업데이트
-                if websocket_manager:
-                    active_symbols = list(websocket_manager.stock_subscribers.keys())
-
-                    for symbol in active_symbols:
-                        if symbol in self.stock_data:
-                            updated_data = self.generate_price_update(symbol)
-                            if updated_data:
-                                # WebSocket을 통해 구독자들에게 브로드캐스트
-                                await websocket_manager.broadcast_stock_data(
-                                    symbol, updated_data
-                                )
-                                logger.debug(
-                                    f"{symbol} 데이터 업데이트: ${updated_data['price']}"
-                                )
-
-                # 1-3초 간격으로 업데이트
-                await asyncio.sleep(random.uniform(1, 3))
-
+                # 모든 주식의 가격 업데이트
+                for symbol in self.stock_symbols.keys():
+                    self.generate_price_update(symbol)
+                
+                # 2초마다 업데이트
+                await asyncio.sleep(2)
         except asyncio.CancelledError:
-            logger.info("시뮬레이션이 취소되었습니다.")
+            logger.info("시뮬레이션 태스크가 취소되었습니다.")
         except Exception as e:
-            logger.error(f"시뮬레이션 중 오류 발생: {e}")
-        finally:
-            self.is_running = False
+            logger.error(f"시뮬레이션 실행 중 오류: {str(e)}")
 
-    def stop_simulation(self):
-        """시뮬레이션 중지."""
-        self.is_running = False
-        if self.simulation_task and not self.simulation_task.done():
-            self.simulation_task.cancel()
-        logger.info("주식 데이터 시뮬레이션 중지")
+    def get_all_stocks(self) -> Dict[str, Dict]:
+        """모든 주식 데이터 반환."""
+        return self.stock_data.copy()
+
+    def get_stock_by_symbol(self, symbol: str) -> Dict:
+        """특정 주식 데이터 반환."""
+        return self.stock_data.get(symbol, {})
 
     def create_market_status(self) -> Dict:
         """시장 상태 정보를 생성."""

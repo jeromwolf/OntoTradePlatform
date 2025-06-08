@@ -1,131 +1,146 @@
 /**
- * 포트폴리오 관리 페이지 - 와이어프레임 기반 리디자인
+ * 포트폴리오 관리 페이지 - 플랫폼 톤앤매너 통일
  */
 
-import React, { useState } from "react";
-import MainLayout from "../components/Layout/MainLayout";
-
-// 타입 정의
-interface Position {
-  id: string;
-  symbol: string;
-  name: string;
-  quantity: number;
-  average_price: number;
-  current_price: number;
-  total_value: number;
-  unrealized_pnl: number;
-  unrealized_pnl_percent: number;
-  weight: number;
-}
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { usePortfolio } from "../contexts/PortfolioContext";
 
 const PortfolioPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { 
+    portfolios, 
+    currentPortfolio, 
+    holdings,
+    transactions,
+    loading, 
+    error,
+    selectPortfolio
+  } = usePortfolio();
+
+  // 지원 언어 상태
   const [language, setLanguage] = useState<"ko" | "en">("ko");
+
+  // 첫 번째 포트폴리오 자동 선택
+  useEffect(() => {
+    if (portfolios.length > 0 && !currentPortfolio) {
+      selectPortfolio(portfolios[0].id);
+    }
+  }, [portfolios, currentPortfolio, selectPortfolio]);
+
+  // 통화 포맷 함수
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(language === "ko" ? "ko-KR" : "en-US", {
+      style: "currency",
+      currency: language === "ko" ? "KRW" : "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
+  // 퍼센트 포맷 함수
+  const formatPercent = (value: number) => {
+    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+  };
+
+  // 네비게이션 함수
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  // 포트폴리오 요약 계산
+  const calculatePortfolioSummary = () => {
+    if (!currentPortfolio || holdings.length === 0) {
+      return {
+        totalValue: 0,
+        totalCost: 0,
+        totalGainLoss: 0,
+        totalGainLossPercent: 0,
+        dayGainLoss: 0,
+        dayGainLossPercent: 0,
+        totalReturn: 0,
+        annualizedReturn: 0,
+        volatility: 0,
+        sharpeRatio: 0,
+        maxDrawdown: 0
+      };
+    }
+
+    const totalValue = holdings.reduce((sum, holding) => sum + ((holding.current_price || holding.average_cost) * holding.quantity), 0);
+    const totalCost = holdings.reduce((sum, holding) => sum + (holding.average_cost * holding.quantity), 0);
+    const totalGainLoss = totalValue - totalCost;
+    const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
+
+    // 임시 일일 손익 계산 (실제로는 이전 종가 데이터가 필요)
+    const dayGainLoss = totalGainLoss * 0.02; // 2% 임시 일일 변동
+    const dayGainLossPercent = totalValue > 0 ? (dayGainLoss / totalValue) * 100 : 0;
+
+    return {
+      totalValue,
+      totalCost,
+      totalGainLoss,
+      totalGainLossPercent,
+      dayGainLoss,
+      dayGainLossPercent,
+      totalReturn: totalGainLossPercent,
+      annualizedReturn: totalGainLossPercent * 2, // 임시 연환산
+      volatility: 15.5, // 임시 변동성
+      sharpeRatio: 1.2, // 임시 샤프 비율
+      maxDrawdown: -8.5 // 임시 최대 낙폭
+    };
+  };
+
+  const portfolioSummary = calculatePortfolioSummary();
+
+  // Position 타입 정의 (보유종목 표시용)
+  interface Position {
+    symbol: string;
+    quantity: number;
+    avgPrice: number;
+    currentPrice: number;
+    marketValue: number;
+    unrealized_pnl: number;
+    unrealized_pnl_percent: number;
+  }
+
+  // 보유종목을 Position 형태로 변환
+  const positions: Position[] = holdings.map(holding => {
+    const currentPrice = holding.current_price || holding.average_cost;
+    const marketValue = currentPrice * holding.quantity;
+    const costBasis = holding.average_cost * holding.quantity;
+    const unrealized_pnl = marketValue - costBasis;
+    const unrealized_pnl_percent = costBasis > 0 ? (unrealized_pnl / costBasis) * 100 : 0;
+
+    return {
+      symbol: holding.symbol,
+      quantity: holding.quantity,
+      avgPrice: holding.average_cost,
+      currentPrice,
+      marketValue,
+      unrealized_pnl,
+      unrealized_pnl_percent
+    };
+  });
+
+  // 섹터별 비중 계산 (임시 데이터)
+  const sectorAllocations = [
+    { sector: language === "ko" ? "기술주" : "Technology", weight: 35, color: "#3b82f6", emoji: "💻" },
+    { sector: language === "ko" ? "금융" : "Finance", weight: 25, color: "#10b981", emoji: "🏦" },
+    { sector: language === "ko" ? "헬스케어" : "Healthcare", weight: 20, color: "#8b5cf6", emoji: "🏥" },
+    { sector: language === "ko" ? "소비재" : "Consumer", weight: 15, color: "#f59e0b", emoji: "🛍️" },
+    { sector: language === "ko" ? "기타" : "Others", weight: 5, color: "#6b7280", emoji: "📊" }
+  ];
+
   const [selectedPeriod, setSelectedPeriod] = useState<
     "1M" | "3M" | "6M" | "1Y" | "ALL"
   >("1M");
-
-  // 더미 데이터 - 실제 API 연결 시 교체
-  const portfolioSummary = {
-    totalAssets: 127580,
-    dailyChange: 2450,
-    dailyChangePercent: 1.96,
-    initialInvestment: 100000,
-    targetReturn: 15,
-    totalReturn: 27.58,
-    annualizedReturn: 18.2,
-    volatility: 12.5,
-    sharpeRatio: 1.45,
-    maxDrawdown: -8.3,
-  };
-
-  const positions: Position[] = [
-    {
-      id: "1",
-      symbol: "AAPL",
-      name: "Apple Inc.",
-      quantity: 50,
-      average_price: 150.25,
-      current_price: 155.3,
-      total_value: 7765,
-      unrealized_pnl: 252.5,
-      unrealized_pnl_percent: 3.36,
-      weight: 45,
-    },
-    {
-      id: "2",
-      symbol: "TSLA",
-      name: "Tesla Inc.",
-      quantity: 25,
-      average_price: 240.8,
-      current_price: 235.4,
-      total_value: 5885,
-      unrealized_pnl: -135.0,
-      unrealized_pnl_percent: -2.24,
-      weight: 30,
-    },
-    {
-      id: "3",
-      symbol: "MSFT",
-      name: "Microsoft Corp.",
-      quantity: 20,
-      average_price: 310.15,
-      current_price: 318.9,
-      total_value: 6378,
-      unrealized_pnl: 175.0,
-      unrealized_pnl_percent: 2.82,
-      weight: 15,
-    },
-    {
-      id: "4",
-      symbol: "GOOGL",
-      name: "Alphabet Inc.",
-      quantity: 15,
-      average_price: 145.6,
-      current_price: 148.2,
-      total_value: 2223,
-      unrealized_pnl: 39.0,
-      unrealized_pnl_percent: 1.78,
-      weight: 10,
-    },
-  ];
-
-  const transactions = [
-    {
-      id: "1",
-      date: "2024-06-07",
-      symbol: "AAPL",
-      type: "buy",
-      quantity: 10,
-      price: 155.3,
-      total: 1553,
-    },
-    {
-      id: "2",
-      date: "2024-06-06",
-      symbol: "TSLA",
-      type: "sell",
-      quantity: 5,
-      price: 235.4,
-      total: 1177,
-    },
-    {
-      id: "3",
-      date: "2024-06-05",
-      symbol: "MSFT",
-      type: "buy",
-      quantity: 5,
-      price: 318.9,
-      total: 1594.5,
-    },
-  ];
-
-  const sectorAllocations = [
-    { sector: "기술주", weight: 45, color: "bg-blue-500", emoji: "💻" },
-    { sector: "자동차", weight: 30, color: "bg-green-500", emoji: "🚗" },
-    { sector: "소프트웨어", weight: 15, color: "bg-yellow-500", emoji: "💾" },
-    { sector: "검색", weight: 10, color: "bg-purple-500", emoji: "🔍" },
-  ];
 
   const periods = [
     { key: "1M", label: language === "ko" ? "1개월" : "1M" },
@@ -135,352 +150,737 @@ const PortfolioPage: React.FC = () => {
     { key: "ALL", label: language === "ko" ? "전체" : "ALL" },
   ] as const;
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  // 로딩 상태 표시
+  if (loading) {
+    return (
+      <div style={{ 
+        minHeight: "100vh", 
+        backgroundColor: "#0a0e27", 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center" 
+      }}>
+        <div style={{ 
+          color: "#e2e8f0", 
+          fontSize: "1.5rem", 
+          display: "flex", 
+          alignItems: "center", 
+          gap: "1rem" 
+        }}>
+          <div style={{
+            width: "2rem",
+            height: "2rem",
+            border: "3px solid #374151",
+            borderTop: "3px solid #3b82f6",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite"
+          }} />
+          {language === "ko" ? "포트폴리오 로딩 중..." : "Loading Portfolio..."}
+        </div>
+      </div>
+    );
+  }
 
-  const formatPercent = (percent: number): string => {
-    const sign = percent >= 0 ? "+" : "";
-    return `${sign}${percent.toFixed(2)}%`;
-  };
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div style={{ 
+        minHeight: "100vh", 
+        backgroundColor: "#0a0e27", 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center" 
+      }}>
+        <div style={{
+          backgroundColor: "#131629",
+          padding: "2rem",
+          borderRadius: "0.75rem",
+          border: "1px solid #ef4444",
+          textAlign: "center",
+          maxWidth: "400px"
+        }}>
+          <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>❌</div>
+          <h3 style={{ color: "#ef4444", marginBottom: "0.5rem" }}>
+            {language === "ko" ? "오류 발생" : "Error Occurred"}
+          </h3>
+          <p style={{ color: "#e2e8f0", marginBottom: "1.5rem" }}>
+            {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: "0.75rem 1.5rem",
+              backgroundColor: "#3b82f6",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "0.5rem",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: "500"
+            }}
+          >
+            {language === "ko" ? "다시 시도" : "Retry"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gray-900 p-6">
-        {/* 언어 선택 */}
-        <div className="flex justify-end mb-6">
-          <div className="flex bg-gray-800 rounded-lg p-1">
+    <div style={{ minHeight: "100vh", backgroundColor: "#0a0e27", padding: "1.5rem" }}>
+      {/* 스타일 정의 */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+
+      {/* 통합 네비게이션 헤더 */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "2rem",
+        padding: "1rem 0",
+        borderBottom: "1px solid #374151"
+      }}>
+        {/* 로고 및 네비게이션 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+          <div 
+            onClick={() => navigate("/dashboard")}
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              color: "#3b82f6",
+              cursor: "pointer",
+              transition: "color 0.3s ease"
+            }}
+            onMouseEnter={(e) => (e.target as HTMLElement).style.color = "#1d4ed8"}
+            onMouseLeave={(e) => (e.target as HTMLElement).style.color = "#3b82f6"}
+          >
+            💼 OntoTrade
+          </div>
+          
+          <button
+            onClick={() => navigate("/dashboard")}
+            style={{
+              padding: "0.5rem 1rem",
+              backgroundColor: "#374151",
+              color: "#e2e8f0",
+              border: "none",
+              borderRadius: "0.5rem",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              cursor: "pointer",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = "#4b5563";
+              (e.target as HTMLElement).style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.backgroundColor = "#374151";
+              (e.target as HTMLElement).style.transform = "translateY(0px)";
+            }}
+          >
+            🏠 {language === "ko" ? "대시보드" : "Dashboard"}
+          </button>
+
+          {/* 포트폴리오 선택 드롭다운 */}
+          {portfolios.length > 0 && (
+            <select
+              value={currentPortfolio?.id || ""}
+              onChange={(e) => selectPortfolio(e.target.value)}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: "#131629",
+                color: "#e2e8f0",
+                border: "1px solid #374151",
+                borderRadius: "0.5rem",
+                fontSize: "0.875rem",
+                cursor: "pointer"
+              }}
+            >
+              {portfolios.map((portfolio) => (
+                <option key={portfolio.id} value={portfolio.id}>
+                  📊 {portfolio.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* 사용자 컨트롤 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          {/* 언어 토글 */}
+          <div style={{
+            display: "flex",
+            backgroundColor: "#131629",
+            borderRadius: "0.5rem",
+            padding: "0.25rem"
+          }}>
             <button
               onClick={() => setLanguage("ko")}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                language === "ko"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: language === "ko" ? "#3b82f6" : "transparent",
+                color: language === "ko" ? "#ffffff" : "#64748b",
+                border: "none",
+                borderRadius: "0.375rem",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.3s ease"
+              }}
             >
               🇰🇷 한국어
             </button>
             <button
               onClick={() => setLanguage("en")}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                language === "en"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: language === "en" ? "#3b82f6" : "transparent",
+                color: language === "en" ? "#ffffff" : "#64748b",
+                border: "none",
+                borderRadius: "0.375rem",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.3s ease"
+              }}
             >
               🇺🇸 English
             </button>
           </div>
+
+          {/* 사용자 정보 및 로그아웃 */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span style={{ color: "#e2e8f0", fontSize: "0.875rem" }}>
+              👤 {user?.email}
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: "#ef4444",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "0.5rem",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.3s ease"
+              }}
+              onMouseEnter={(e) => {
+                (e.target as HTMLElement).style.backgroundColor = "#dc2626";
+                (e.target as HTMLElement).style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLElement).style.backgroundColor = "#ef4444";
+                (e.target as HTMLElement).style.transform = "translateY(0px)";
+              }}
+            >
+              🚪 {language === "ko" ? "로그아웃" : "Logout"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: "80rem", margin: "0 auto" }}>
+        {/* 페이지 헤더 */}
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h1 style={{
+            fontSize: "2.25rem",
+            fontWeight: "bold",
+            color: "#e2e8f0",
+            marginBottom: "0.5rem"
+          }}>
+            💼 {language === "ko" ? "포트폴리오 관리" : "Portfolio Management"}
+          </h1>
         </div>
 
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* 페이지 헤더 */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              💼{" "}
-              {language === "ko" ? "포트폴리오 관리" : "Portfolio Management"}
-            </h1>
-          </div>
+        {/* 포트폴리오 개요 */}
+        <div style={{
+          backgroundColor: "#131629",
+          borderRadius: "0.75rem",
+          padding: "2rem",
+          marginBottom: "2rem"
+        }}>
+          <h2 style={{
+            fontSize: "1.5rem",
+            fontWeight: "600",
+            color: "#e2e8f0",
+            marginBottom: "1.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem"
+          }}>
+            📊 {language === "ko" ? "포트폴리오 개요" : "Portfolio Overview"}
+          </h2>
 
-          {/* 포트폴리오 개요 */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              📊 {language === "ko" ? "포트폴리오 개요" : "Portfolio Overview"}
-            </h2>
-
-            {/* 주요 지표 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-sm text-gray-400 mb-1">
-                  💰 {language === "ko" ? "총 자산" : "Total Assets"}
-                </div>
-                <div className="text-2xl font-bold text-white">
-                  {formatCurrency(portfolioSummary.totalAssets)}
-                </div>
+          {/* 주요 지표 */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "1.5rem",
+            marginBottom: "2rem"
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+                💰 {language === "ko" ? "총 자산" : "Total Assets"}
               </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-400 mb-1">
-                  📈 {language === "ko" ? "일간수익" : "Daily P&L"}
-                </div>
-                <div
-                  className={`text-2xl font-bold ${portfolioSummary.dailyChange >= 0 ? "text-green-400" : "text-red-400"}`}
-                >
-                  {formatCurrency(portfolioSummary.dailyChange)} (
-                  {formatPercent(portfolioSummary.dailyChangePercent)})
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-400 mb-1">
-                  💸 {language === "ko" ? "투자원금" : "Initial Investment"}
-                </div>
-                <div className="text-2xl font-bold text-white">
-                  {formatCurrency(portfolioSummary.initialInvestment)}
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-400 mb-1">
-                  🎯 {language === "ko" ? "목표수익률" : "Target Return"}
-                </div>
-                <div className="text-2xl font-bold text-blue-400">
-                  {portfolioSummary.targetReturn}%
-                </div>
+              <div style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#e2e8f0" }}>
+                {formatCurrency(portfolioSummary.totalValue)}
               </div>
             </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+                📈 {language === "ko" ? "일간수익" : "Daily P&L"}
+              </div>
+              <div style={{
+                fontSize: "1.875rem",
+                fontWeight: "bold",
+                color: portfolioSummary.dayGainLoss >= 0 ? "#10b981" : "#ef4444"
+              }}>
+                {formatCurrency(portfolioSummary.dayGainLoss)} (
+                {formatPercent(portfolioSummary.dayGainLossPercent)})
+              </div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+                💸 {language === "ko" ? "투자원금" : "Initial Investment"}
+              </div>
+              <div style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#e2e8f0" }}>
+                {formatCurrency(portfolioSummary.totalCost)}
+              </div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+                🎯 {language === "ko" ? "목표수익률" : "Target Return"}
+              </div>
+              <div style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#3b82f6" }}>
+                {portfolioSummary.totalReturn}%
+              </div>
+            </div>
+          </div>
 
-            {/* 기간 선택 */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {periods.map((period) => (
-                <button
-                  key={period.key}
-                  onClick={() =>
-                    setSelectedPeriod(
-                      period.key as "1M" | "3M" | "6M" | "1Y" | "ALL",
-                    )
+          {/* 기간 선택 */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.5rem" }}>
+            {periods.map((period) => (
+              <button
+                key={period.key}
+                onClick={() =>
+                  setSelectedPeriod(
+                    period.key as "1M" | "3M" | "6M" | "1Y" | "ALL",
+                  )
+                }
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  backgroundColor: selectedPeriod === period.key ? "#3b82f6" : "#374151",
+                  color: selectedPeriod === period.key ? "#ffffff" : "#d1d5db",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedPeriod !== period.key) {
+                    (e.target as HTMLElement).style.backgroundColor = "#4b5563";
                   }
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    selectedPeriod === period.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  {period.label}
-                </button>
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedPeriod !== period.key) {
+                    (e.target as HTMLElement).style.backgroundColor = "#374151";
+                  }
+                }}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 수익률 차트 플레이스홀더 */}
+          <div style={{
+            backgroundColor: "#374151",
+            borderRadius: "0.75rem",
+            padding: "2rem",
+            height: "16rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}>
+            <div style={{ textAlign: "center", color: "#64748b" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>📈</div>
+              <div style={{ fontSize: "1.125rem", fontWeight: "500" }}>
+                {language === "ko" ? "수익률 차트" : "Return Chart"}
+              </div>
+              <div style={{ fontSize: "0.875rem", marginTop: "0.5rem" }}>
+                {language === "ko"
+                  ? "차트 라이브러리 통합 예정"
+                  : "Chart library integration pending"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
+          {/* 보유 종목 */}
+          <div style={{ backgroundColor: "#131629", borderRadius: "0.75rem", padding: "2rem" }}>
+            <h3 style={{
+              fontSize: "1.5rem",
+              fontWeight: "600",
+              color: "#e2e8f0",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              🏷️ {language === "ko" ? "보유 종목" : "Holdings"}
+            </h3>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+              <div style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                {language === "ko" ? "종목명" : "Symbol"}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+                {language === "ko" ? "수량" : "Qty"}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+                {language === "ko" ? "비중" : "Weight"}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+                {language === "ko" ? "손익" : "P&L"}
+              </div>
+
+              {positions.map((position) => (
+                <React.Fragment key={position.symbol}>
+                  <div style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                    {position.symbol}
+                  </div>
+                  <div style={{ fontSize: "1rem", color: "#d1d5db", textAlign: "center" }}>
+                    {position.quantity}
+                  </div>
+                  <div style={{ fontSize: "1rem", color: "#d1d5db", textAlign: "center" }}>
+                    {position.marketValue}
+                  </div>
+                  <div style={{
+                    fontSize: "1rem",
+                    fontWeight: "500",
+                    color: position.unrealized_pnl >= 0 ? "#10b981" : "#ef4444",
+                    textAlign: "center"
+                  }}>
+                    {formatPercent(position.unrealized_pnl_percent)}
+                  </div>
+                </React.Fragment>
               ))}
             </div>
 
-            {/* 수익률 차트 플레이스홀더 */}
-            <div className="bg-gray-700 rounded-lg p-6 h-64 flex items-center justify-center">
-              <div className="text-center text-gray-400">
-                <div className="text-4xl mb-2">📈</div>
-                <div className="text-lg font-medium">
-                  {language === "ko" ? "수익률 차트" : "Return Chart"}
-                </div>
-                <div className="text-sm mt-2">
-                  {language === "ko"
-                    ? "차트 라이브러리 통합 예정"
-                    : "Chart library integration pending"}
-                </div>
-              </div>
+            <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
+              <button
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  backgroundColor: "#3b82f6",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLElement).style.backgroundColor = "#1d4ed8";
+                  (e.target as HTMLElement).style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLElement).style.backgroundColor = "#3b82f6";
+                  (e.target as HTMLElement).style.transform = "translateY(0px)";
+                }}
+              >
+                📈 {language === "ko" ? "종목 추가" : "Add Position"}
+              </button>
+              <button
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  backgroundColor: "#ef4444",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLElement).style.backgroundColor = "#dc2626";
+                  (e.target as HTMLElement).style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLElement).style.backgroundColor = "#ef4444";
+                  (e.target as HTMLElement).style.transform = "translateY(0px)";
+                }}
+              >
+                📉 {language === "ko" ? "전체 매도" : "Sell All"}
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* 보유 종목 */}
-            <div className="lg:col-span-1">
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  🏷️ {language === "ko" ? "보유 종목" : "Holdings"}
-                </h3>
+          {/* 거래 내역 */}
+          <div style={{ backgroundColor: "#131629", borderRadius: "0.75rem", padding: "2rem" }}>
+            <h3 style={{
+              fontSize: "1.5rem",
+              fontWeight: "600",
+              color: "#e2e8f0",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              📋 {language === "ko" ? "거래 내역" : "Transaction History"}
+            </h3>
 
-                <div className="space-y-3">
-                  <div className="grid grid-cols-4 gap-2 text-sm font-medium text-gray-400 border-b border-gray-600 pb-2">
-                    <div>{language === "ko" ? "종목명" : "Symbol"}</div>
-                    <div className="text-center">
-                      {language === "ko" ? "수량" : "Qty"}
-                    </div>
-                    <div className="text-center">
-                      {language === "ko" ? "비중" : "Weight"}
-                    </div>
-                    <div className="text-center">
-                      {language === "ko" ? "손익" : "P&L"}
-                    </div>
-                  </div>
-
-                  {positions.map((position) => (
-                    <div
-                      key={position.id}
-                      className="grid grid-cols-4 gap-2 text-sm"
-                    >
-                      <div className="text-white font-medium">
-                        {position.symbol}
-                      </div>
-                      <div className="text-center text-gray-300">
-                        {position.quantity}
-                      </div>
-                      <div className="text-center text-gray-300">
-                        {position.weight}%
-                      </div>
-                      <div
-                        className={`text-center font-medium ${
-                          position.unrealized_pnl >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {formatPercent(position.unrealized_pnl_percent)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 space-y-2">
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    📈 {language === "ko" ? "종목 추가" : "Add Position"}
-                  </button>
-                  <button className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    📉 {language === "ko" ? "전체 매도" : "Sell All"}
-                  </button>
-                </div>
-              </div>
-
-              {/* 거래 내역 */}
-              <div className="bg-gray-800 rounded-lg p-6 mt-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  📋 {language === "ko" ? "거래 내역" : "Transaction History"}
-                </h3>
-
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-2 text-sm font-medium text-gray-400 border-b border-gray-600 pb-2">
-                    <div>{language === "ko" ? "날짜" : "Date"}</div>
-                    <div className="text-center">
-                      {language === "ko" ? "종목" : "Symbol"}
-                    </div>
-                    <div className="text-center">
-                      {language === "ko" ? "유형" : "Type"}
-                    </div>
-                  </div>
-
-                  {transactions.slice(0, 5).map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="grid grid-cols-3 gap-2 text-sm"
-                    >
-                      <div className="text-gray-300">
-                        {transaction.date.slice(5)}
-                      </div>
-                      <div className="text-center text-white font-medium">
-                        {transaction.symbol}
-                      </div>
-                      <div
-                        className={`text-center font-medium ${
-                          transaction.type === "buy"
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {transaction.type === "buy"
-                          ? language === "ko"
-                            ? "매수"
-                            : "Buy"
-                          : language === "ko"
-                            ? "매도"
-                            : "Sell"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button className="w-full mt-4 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
-                  {language === "ko"
-                    ? "전체 내역 보기"
-                    : "View All Transactions"}
+            {/* 빈 상태 메시지 */}
+            {positions.length === 0 ? (
+              <div style={{
+                textAlign: "center",
+                padding: "3rem",
+                color: "#64748b"
+              }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📊</div>
+                <h4 style={{ fontSize: "1.25rem", marginBottom: "0.5rem", color: "#e2e8f0" }}>
+                  {language === "ko" ? "포트폴리오가 비어있습니다" : "Portfolio is Empty"}
+                </h4>
+                <p style={{ fontSize: "0.875rem" }}>
+                  {language === "ko" 
+                    ? "첫 번째 투자를 시작해보세요" 
+                    : "Start your first investment"}
+                </p>
+                <button
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    backgroundColor: "#3b82f6",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "0.5rem",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    marginTop: "1rem",
+                    fontSize: "0.875rem"
+                  }}
+                >
+                  📈 {language === "ko" ? "종목 추가하기" : "Add First Position"}
                 </button>
+              </div>
+            ) : (
+              <>
+                {/* 거래내역 헤더 */}
+                <div style={{ 
+                  display: "grid", 
+                  gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr", 
+                  gap: "1rem", 
+                  marginBottom: "1rem",
+                  padding: "0.75rem",
+                  backgroundColor: "#0a0e27",
+                  borderRadius: "0.5rem"
+                }}>
+                  <div style={{ fontSize: "0.875rem", color: "#64748b", fontWeight: "600" }}>
+                    {language === "ko" ? "날짜" : "Date"}
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                    {language === "ko" ? "종목" : "Symbol"}
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                    {language === "ko" ? "유형" : "Type"}
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                    {language === "ko" ? "수량" : "Quantity"}
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                    {language === "ko" ? "가격" : "Price"}
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                    {language === "ko" ? "총액" : "Total"}
+                  </div>
+                </div>
+
+                {/* 더미 거래 내역 (실제 거래내역 API 연동 필요) */}
+                {transactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr",
+                      gap: "1rem",
+                      padding: "0.75rem",
+                      backgroundColor: "#1e293b",
+                      borderRadius: "0.5rem",
+                      marginBottom: "0.5rem",
+                      transition: "all 0.3s ease"
+                    }}
+                  >
+                    <div style={{ color: "#e2e8f0", fontSize: "0.875rem" }}>
+                      {new Date(transaction.transaction_date).toLocaleDateString(
+                        language === "ko" ? "ko-KR" : "en-US"
+                      )}
+                    </div>
+                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem", fontWeight: "500" }}>
+                      {transaction.symbol}
+                    </div>
+                    <div style={{ 
+                      textAlign: "center", 
+                      fontSize: "0.875rem",
+                      color: transaction.transaction_type === "BUY" ? "#10b981" : "#ef4444",
+                      fontWeight: "500"
+                    }}>
+                      {transaction.transaction_type === "BUY" 
+                        ? (language === "ko" ? "매수" : "BUY") 
+                        : (language === "ko" ? "매도" : "SELL")}
+                    </div>
+                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem" }}>
+                      {transaction.quantity.toLocaleString()}
+                    </div>
+                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem" }}>
+                      {formatCurrency(transaction.price)}
+                    </div>
+                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem", fontWeight: "500" }}>
+                      {formatCurrency(transaction.total_amount)}
+                    </div>
+                  </div>
+                ))}
+
+                {transactions.length === 0 && (
+                  <div style={{
+                    textAlign: "center",
+                    padding: "2rem",
+                    color: "#64748b"
+                  }}>
+                    <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>📋</div>
+                    <p style={{ fontSize: "0.875rem" }}>
+                      {language === "ko" ? "거래 내역이 없습니다" : "No transaction history"}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
+          {/* 자산 분석 */}
+          <div style={{ backgroundColor: "#131629", borderRadius: "0.75rem", padding: "2rem" }}>
+            <h3 style={{
+              fontSize: "1.5rem",
+              fontWeight: "600",
+              color: "#e2e8f0",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              📊 {language === "ko" ? "자산 분석" : "Asset Analysis"}
+            </h3>
+
+            {/* 섹터별 비중 */}
+            <div style={{ marginBottom: "2rem" }}>
+              <h4 style={{
+                fontSize: "1.125rem",
+                fontWeight: "500",
+                color: "#e2e8f0",
+                marginBottom: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}>
+                🥧 {language === "ko" ? "섹터별 비중" : "Sector Allocation"}
+              </h4>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+                {sectorAllocations.map((sector, index) => (
+                  <div key={index} style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "1.5rem" }}>{sector.emoji}</span>
+                      <span style={{ fontSize: "1rem", color: "#d1d5db" }}>{sector.sector}</span>
+                    </div>
+                    <div style={{ flex: 1, backgroundColor: "#374151", borderRadius: "0.5rem", height: "1rem" }}>
+                      <div style={{
+                        height: "1rem",
+                        borderRadius: "0.5rem",
+                        backgroundColor: sector.color,
+                        width: `${sector.weight}%`
+                      }}></div>
+                    </div>
+                    <div style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                      {sector.weight}%
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* 자산 분석 */}
-            <div className="lg:col-span-2">
-              <div className="bg-gray-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  📊 {language === "ko" ? "자산 분석" : "Asset Analysis"}
-                </h3>
+            {/* 성과 지표 */}
+            <div>
+              <h4 style={{
+                fontSize: "1.125rem",
+                fontWeight: "500",
+                color: "#e2e8f0",
+                marginBottom: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}>
+                📈 {language === "ko" ? "성과 지표" : "Performance Metrics"}
+              </h4>
 
-                {/* 섹터별 비중 */}
-                <div className="mb-6">
-                  <h4 className="text-md font-medium text-white mb-3 flex items-center gap-2">
-                    🥧 {language === "ko" ? "섹터별 비중" : "Sector Allocation"}
-                  </h4>
-
-                  <div className="space-y-3">
-                    {sectorAllocations.map((sector, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 w-24">
-                          <span>{sector.emoji}</span>
-                          <span className="text-sm text-gray-300">
-                            {sector.sector}
-                          </span>
-                        </div>
-                        <div className="flex-1 bg-gray-700 rounded-full h-3">
-                          <div
-                            className={`h-3 rounded-full ${sector.color}`}
-                            style={{ width: `${sector.weight}%` }}
-                          ></div>
-                        </div>
-                        <div className="text-sm text-white font-medium w-12">
-                          {sector.weight}%
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "1rem", color: "#64748b" }}>
+                    {language === "ko" ? "총 수익률" : "Total Return"}:
+                  </span>
+                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#10b981" }}>
+                    {formatPercent(portfolioSummary.totalReturn)}
+                  </span>
                 </div>
-
-                {/* 성과 지표 */}
-                <div>
-                  <h4 className="text-md font-medium text-white mb-3 flex items-center gap-2">
-                    📈 {language === "ko" ? "성과 지표" : "Performance Metrics"}
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">
-                          {language === "ko" ? "총 수익률" : "Total Return"}:
-                        </span>
-                        <span className="text-green-400 font-medium">
-                          {formatPercent(portfolioSummary.totalReturn)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">
-                          {language === "ko"
-                            ? "연환산 수익률"
-                            : "Annualized Return"}
-                          :
-                        </span>
-                        <span className="text-green-400 font-medium">
-                          {formatPercent(portfolioSummary.annualizedReturn)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">
-                          {language === "ko" ? "변동성" : "Volatility"}:
-                        </span>
-                        <span className="text-white font-medium">
-                          {portfolioSummary.volatility}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">
-                          {language === "ko" ? "샤프 비율" : "Sharpe Ratio"}:
-                        </span>
-                        <span className="text-white font-medium">
-                          {portfolioSummary.sharpeRatio}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">
-                          {language === "ko" ? "최대 낙폭" : "Max Drawdown"}:
-                        </span>
-                        <span className="text-red-400 font-medium">
-                          {formatPercent(portfolioSummary.maxDrawdown)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "1rem", color: "#64748b" }}>
+                    {language === "ko"
+                      ? "연환산 수익률"
+                      : "Annualized Return"}
+                    :
+                  </span>
+                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#10b981" }}>
+                    {formatPercent(portfolioSummary.annualizedReturn)}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "1rem", color: "#64748b" }}>
+                    {language === "ko" ? "변동성" : "Volatility"}:
+                  </span>
+                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                    {portfolioSummary.volatility}%
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "1rem", color: "#64748b" }}>
+                    {language === "ko" ? "샤프 비율" : "Sharpe Ratio"}:
+                  </span>
+                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                    {portfolioSummary.sharpeRatio}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "1rem", color: "#64748b" }}>
+                    {language === "ko" ? "최대 낙폭" : "Max Drawdown"}:
+                  </span>
+                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#ef4444" }}>
+                    {formatPercent(portfolioSummary.maxDrawdown)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

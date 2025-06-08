@@ -91,6 +91,10 @@ class SupabaseClient:
                 detail=f"사용자 생성 실패: {str(e)}",
             )
 
+    def table(self, table_name: str):
+        """테이블 클라이언트 반환."""
+        return self.client.table(table_name)
+
 
 # 전역 Supabase 클라이언트 인스턴스
 supabase_client = SupabaseClient()

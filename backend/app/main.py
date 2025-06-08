@@ -6,7 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.endpoints import portfolio_holdings, portfolios
+from app.api.endpoints import portfolio_holdings, portfolios, stock_search, watchlist, auth
+from app.routers import simulation
 from app.core.config import settings
 from app.core.monitoring import init_sentry
 from app.core.websocket_simple import (
@@ -80,6 +81,19 @@ async def websocket_stats():
     return JSONResponse({"status": "success", "data": stats})
 
 
+@app.get("/debug/env")
+async def debug_env():
+    """환경 변수 상태 확인 (디버그용)"""
+    import os
+    return JSONResponse({
+        "supabase_url": bool(os.getenv("SUPABASE_URL")),
+        "supabase_anon_key": bool(os.getenv("SUPABASE_ANON_KEY")),
+        "supabase_service_key": bool(os.getenv("SUPABASE_SERVICE_KEY")),
+        "database_url": bool(os.getenv("ASYNC_DATABASE_URL")),
+        "env_loaded": True
+    })
+
+
 # WebSocket 라우터 포함
 app.include_router(ws_router)
 
@@ -88,6 +102,10 @@ app.include_router(portfolios.router, prefix="/api/portfolios", tags=["portfolio
 app.include_router(
     portfolio_holdings.router, prefix="/api/portfolios", tags=["portfolio-holdings"]
 )
+app.include_router(simulation.router, prefix="/api/simulation", tags=["simulation"])
+app.include_router(stock_search.router, prefix="/api/stocks", tags=["stock-search"])
+app.include_router(watchlist.router, prefix="/api/watchlists", tags=["watchlists"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 
 # Socket.IO와 FastAPI를 결합한 ASGI 앱 생성
 socket_app = socketio.ASGIApp(websocket_manager.sio, app, socketio_path="/socket.io")

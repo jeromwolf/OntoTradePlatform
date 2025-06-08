@@ -1,15 +1,137 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "../lib/supabase";
+
+// 타입 정의
+interface UserProfile {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+}
+
+interface SimulationData {
+  cash: number;
+  total_value: number;
+  total_pnl: number;
+  total_pnl_percent: number;
+  holdings: any;
+}
 
 const DashboardPage: React.FC = () => {
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [activeCategory, setActiveCategory] = useState("전체기업");
   const [activeTab, setActiveTab] = useState("온톨로지");
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [simulationData, setSimulationData] = useState<SimulationData | null>(null);
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+
+  // 프로필 정보 가져오기
+  useEffect(() => {
+    const getProfile = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('프로필 가져오기 오류:', error);
+          return;
+        }
+
+        if (data) {
+          setProfile({
+            id: data.id,
+            full_name: data.full_name,
+            avatar_url: data.avatar_url
+          });
+        }
+      } catch (error) {
+        console.error('프로필 가져오기 오류:', error);
+      }
+    };
+
+    getProfile();
+  }, [user]);
+
+  // 시뮬레이션 데이터 가져오기
+  useEffect(() => {
+    const getSimulationData = async () => {
+      if (!user) return;
+
+      try {
+        // Supabase 세션에서 JWT 토큰 가져오기
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          console.error('액세스 토큰을 찾을 수 없습니다');
+          return;
+        }
+
+        // 먼저 시뮬레이션 시작 (기존 세션이 있으면 재사용)
+        const startResponse = await fetch('http://localhost:8000/api/simulation/start', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!startResponse.ok) {
+          console.error('시뮬레이션 시작 실패:', startResponse.status);
+          return;
+        }
+
+        // 포트폴리오 데이터 가져오기
+        const portfolioResponse = await fetch('http://localhost:8000/api/simulation/portfolio', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+
+        if (portfolioResponse.ok) {
+          const result = await portfolioResponse.json();
+          if (result.success) {
+            setSimulationData({
+              cash: result.data.cash,
+              total_value: result.data.total_value,
+              total_pnl: result.data.total_pnl,
+              total_pnl_percent: result.data.total_pnl_percent,
+              holdings: result.data.holdings
+            });
+          }
+        } else {
+          console.error('포트폴리오 가져오기 실패:', portfolioResponse.status);
+        }
+      } catch (error) {
+        console.error('시뮬레이션 데이터 가져오기 오류:', error);
+      }
+    };
+
+    getSimulationData();
+  }, [user]);
 
   const t = (ko: string, en: string) => (language === "ko" ? ko : en);
+
+  // 사용자 이름 표시 로직
+  const getUserDisplayName = () => {
+    if (!user) return "투자자님";
+    
+    // 1. 사용자 메타데이터에서 이름 확인 (회원가입 시 저장된 이름)
+    const userName = user.user_metadata?.full_name;
+    if (userName) return userName;
+    
+    // 2. 데이터베이스 프로필에서 이름 가져오기
+    if (profile?.full_name) {
+      return profile.full_name;
+    }
+    
+    return "투자자님";
+  };
 
   const handleLogout = async () => {
     try {
@@ -185,8 +307,30 @@ const DashboardPage: React.FC = () => {
             <div
               style={{ color: "#10b981", fontSize: "14px", fontWeight: "500" }}
             >
-              💰 {t("가상자산 ₩10,000,000", "Virtual ₩10,000,000")}
+              💰 {simulationData 
+                ? t(
+                    `가상자산 ₩${simulationData.total_value.toLocaleString()}`, 
+                    `Virtual ₩${simulationData.total_value.toLocaleString()}`
+                  )
+                : t("가상자산 로딩 중...", "Loading Virtual Assets...")
+              }
             </div>
+            {simulationData && simulationData.total_pnl !== 0 && (
+              <div
+                style={{ 
+                  color: simulationData.total_pnl >= 0 ? "#10b981" : "#ef4444", 
+                  fontSize: "12px", 
+                  fontWeight: "500" 
+                }}
+              >
+                {simulationData.total_pnl >= 0 ? "📈" : "📉"} {
+                  t(
+                    `${simulationData.total_pnl >= 0 ? '+' : ''}₩${simulationData.total_pnl.toLocaleString()} (${simulationData.total_pnl_percent.toFixed(2)}%)`,
+                    `${simulationData.total_pnl >= 0 ? '+' : ''}₩${simulationData.total_pnl.toLocaleString()} (${simulationData.total_pnl_percent.toFixed(2)}%)`
+                  )
+                }
+              </div>
+            )}
             <button
               onClick={() => navigate("/profile")}
               style={{
@@ -208,7 +352,7 @@ const DashboardPage: React.FC = () => {
                 e.currentTarget.style.color = "#e2e8f0";
               }}
             >
-              👤 {t("투자자님", "Trader")}
+              👤 {getUserDisplayName()}
             </button>
             <button
               onClick={handleLogout}
@@ -245,7 +389,6 @@ const DashboardPage: React.FC = () => {
           gap: "0",
         }}
       >
-        {" "}
         {/* 왼쪽 사이드바 */}
         <div
           style={{
@@ -691,17 +834,11 @@ const DashboardPage: React.FC = () => {
                 }}
               >
                 <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    color: "white",
-                  }}
+                  style={{ fontSize: "20px", fontWeight: "bold", color: "white" }}
                 >
                   ₩9,847,320
                 </div>
-                <div
-                  style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)" }}
-                >
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)" }}>
                   -1.53% (-152,680원)
                 </div>
               </div>
@@ -790,16 +927,20 @@ const DashboardPage: React.FC = () => {
               >
                 💼 {t("내 포트폴리오", "My Portfolio")}
               </span>
-              <a
-                href="#"
+              <button
+                onClick={() => navigate("/portfolio")}
                 style={{
                   color: "#3b82f6",
                   fontSize: "12px",
                   textDecoration: "none",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0",
                 }}
               >
                 {t("전체보기 →", "View all →")}
-              </a>
+              </button>
             </div>
 
             <div

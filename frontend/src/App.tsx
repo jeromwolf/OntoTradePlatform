@@ -7,6 +7,7 @@ import {
   Link,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { PortfolioProvider } from "./contexts/PortfolioContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -164,89 +165,111 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/profile"
               element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/portfolio"
               element={
-                <ProtectedRoute>
-                  <PortfolioPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <PortfolioPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/monitoring"
               element={
-                <ProtectedRoute>
-                  <MonitoringExample />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <MonitoringExample />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/components"
               element={
-                <ProtectedRoute>
-                  <ComponentsTestPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <ComponentsTestPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/trading"
               element={
-                <ProtectedRoute>
-                  <TradingPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <TradingPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/websocket"
               element={
-                <ProtectedRoute>
-                  <WebSocketTestPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <WebSocketTestPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/analytics"
               element={
-                <ProtectedRoute>
-                  <AnalyticsPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <AnalyticsPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/leaderboard"
               element={
-                <ProtectedRoute>
-                  <LeaderboardPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <LeaderboardPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/learning"
               element={
-                <ProtectedRoute>
-                  <LearningPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <LearningPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
             <Route
               path="/simulation"
               element={
-                <ProtectedRoute>
-                  <SimulationPage />
-                </ProtectedRoute>
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <SimulationPage />
+                  </ProtectedRoute>
+                </PortfolioProvider>
               }
             />
           </Routes>

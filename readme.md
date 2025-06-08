@@ -8,8 +8,13 @@
 [![Status](https://img.shields.io/badge/Status-Active%20Development-green)](https://github.com/jeromwolf/OntoTradePlatform)
 
 ## 📈 최신 업데이트 (2025.06.08)
-- **ProfilePage 완전 리팩토링**: 인라인 스타일 적용으로 플랫폼 톤앤매너 통일
-- **DashboardPage 네비게이션 개선**: 시뮬레이션 메뉴 및 로그아웃 기능 추가
+- **🎉 Supabase 통합 완료**: 회원가입 시 시뮬레이션 세션 자동 생성 (초기 자본 1억원)
+- **🔧 사용자 ID 타입 통일**: UUID → string 타입으로 일관성 확보
+- **✅ 회원가입 플로우 완성**: 프론트엔드 → Supabase Auth → 백엔드 API → DB 저장
+- **🗄️ 데이터베이스 영속성**: 메모리 기반 → 완전한 Supabase PostgreSQL 연동
+- **🔐 인증 시스템 안정화**: JWT 토큰 기반 보안 API 호출 체계 구축
+- **📊 실시간 포트폴리오**: 사용자별 시뮬레이션 세션 및 거래 내역 관리
+- **🚀 백엔드 API 확장**: auth 라우터 등록 및 Supabase 비동기 처리 최적화
 - **UI/UX 일관성 완성**: 모든 페이지에서 통일된 다크 테마 및 이모지 아이콘 적용
 - **SimulationPage 스타일링 완료**: Tailwind CSS 클래스 문제 해결 및 다크 테마 일치
 - **인라인 스타일 전환**: Tailwind 의존성 제거를 통한 렌더링 안정성 향상
@@ -28,17 +33,19 @@ OntoTradePlatform은 **온톨로지 기반 지식 그래프**와 **실시간 주
 
 ### 기술 스택
 - **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS
-- **Backend**: FastAPI + Python 3.11 + PostgreSQL
+- **Backend**: FastAPI + Python 3.11 + Supabase Python Client
+- **Database**: Supabase PostgreSQL + Row Level Security (RLS)
+- **Authentication**: Supabase Auth + JWT Token
 - **Real-time**: Socket.IO + WebSocket
-- **Database**: Supabase (PostgreSQL + Auth)
 - **Deployment**: Vercel (Frontend) + Railway (Backend)
 - **Monitoring**: Sentry + PostHog + 중앙 집중식 로깅
 
 ### 주요 특징
 - 🎨 **모던 다크 테마 UI**: 40+ 재사용 컴포넌트, 이모지 아이콘
-- 🔐 **완전한 인증 시스템**: Supabase Auth + OAuth2 (Google)
+- 🔐 **완전한 인증 시스템**: Supabase Auth + JWT + 자동 세션 생성
 - 📊 **실시간 데이터**: Alpha Vantage API + WebSocket 실시간 스트리밍
 - 🛡️ **데이터 검증**: 이상치 탐지, 품질 메트릭, 다중 소스 지원
+- 💾 **영속적 데이터 저장**: Supabase 기반 시뮬레이션 세션 관리
 - 🧪 **완전한 테스트**: 25개 UI 테스트 통과, Storybook 문서화
 - 📈 **모니터링**: 중앙 집중식 로깅, 성능 추적, 자동 오류 복구
 

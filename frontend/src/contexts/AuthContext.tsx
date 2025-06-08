@@ -12,7 +12,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, options?: { data?: any }) => Promise<any>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
@@ -89,15 +89,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // 회원가입
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, options?: { data?: any }) => {
     setLoading(true);
     try {
+      // 1. Supabase 회원가입
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: options || {}
       });
       if (error) throw error;
       console.log("Supabase signUp 응답:", data);
+
+      // 2. 회원가입 성공 시 백엔드에 시뮬레이션 세션 생성 요청
+      if (data.user && !error) {
+        try {
+          // 인증 토큰 가져오기
+          const session = await supabase.auth.getSession();
+          if (session.data.session?.access_token) {
+            const response = await fetch('http://localhost:8000/api/auth/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.data.session.access_token}`
+              },
+              body: JSON.stringify({
+                email: email,
+                password: password,
+                fullName: options?.data?.fullName || '사용자'
+              })
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log("백엔드 회원가입 성공:", result);
+            } else {
+              console.error("백엔드 회원가입 실패:", await response.text());
+            }
+          }
+        } catch (backendError) {
+          console.error("백엔드 회원가입 요청 실패:", backendError);
+          // 백엔드 오류가 발생해도 Supabase 회원가입은 성공했으므로 계속 진행
+        }
+      }
+
       return data;
     } catch (error) {
       console.error("회원가입 오류:", error);

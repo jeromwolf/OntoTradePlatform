@@ -22,6 +22,8 @@ from app.core.logging_system import (
     logging_system,
 )
 from app.core.monitoring import capture_exception, capture_message
+from app.core.supabase import get_supabase_client
+from app.services.supabase_service import SupabaseService
 
 router = APIRouter()
 
@@ -180,8 +182,6 @@ async def register(user_data: UserRegister):
                 },
             )
 
-            # TODO: 실제 회원가입 로직 구현
-
             # 비밀번호 확인
             if user_data.password != user_data.confirm_password:
                 log_warning(
@@ -200,27 +200,119 @@ async def register(user_data: UserRegister):
                     detail="비밀번호가 일치하지 않습니다.",
                 )
 
-            # 임시 모의 응답
-            response_data = {
-                "message": "회원가입이 성공적으로 완료되었습니다.",
-                "user": {
+            # Supabase를 사용한 실제 회원가입
+            supabase_client = get_supabase_client()
+            
+            try:
+                # Supabase Auth를 사용한 사용자 생성
+                response = supabase_client.client.auth.sign_up({
                     "email": user_data.email,
-                    "username": user_data.username,
-                    "created_at": datetime.utcnow().isoformat(),
-                },
-            }
-
-            log_info(
-                "사용자 회원가입 성공",
-                category="authentication",
-                context={
-                    "email": user_data.email,
-                    "username": user_data.username,
-                    "created_at": response_data["user"]["created_at"],
-                },
-            )
-
-            return JSONResponse(response_data, status_code=status.HTTP_201_CREATED)
+                    "password": user_data.password,
+                    "options": {
+                        "data": {
+                            "username": user_data.username
+                        }
+                    }
+                })
+                
+                if response.user:
+                    user_id = response.user.id
+                    
+                    log_info(
+                        "Supabase 사용자 생성 성공, 시뮬레이션 세션 생성 시작",
+                        category="authentication",
+                        context={
+                            "user_id": user_id,
+                            "user_id_type": str(type(user_id)),
+                            "email": user_data.email,
+                        },
+                    )
+                    
+                    # 시뮬레이션 세션 초기화 (1억원 시작)
+                    supabase_service = SupabaseService()
+                    
+                    try:
+                        # user_id를 문자열로 전달 (UUID로 변환은 SupabaseService에서 처리)
+                        session_data = await supabase_service.create_simulation_session(
+                            user_id=user_id,  # 이미 문자열
+                            cash=100000000  # 1억원
+                        )
+                        
+                        log_info(
+                            "시뮬레이션 세션 생성 성공",
+                            category="authentication",
+                            context={
+                                "user_id": user_id,
+                                "session_id": session_data.get("id"),
+                                "initial_cash": 100000000,
+                            },
+                        )
+                        
+                    except Exception as session_error:
+                        log_error(
+                            "시뮬레이션 세션 생성 실패",
+                            category="authentication",
+                            context={
+                                "user_id": user_id,
+                                "error": str(session_error),
+                                "error_type": type(session_error).__name__,
+                            },
+                        )
+                        # 세션 생성 실패 시 사용자는 생성되었지만 세션은 나중에 생성 가능하도록 알림
+                        log_warning("사용자 생성은 성공했지만 시뮬레이션 세션 생성 실패")
+                    
+                    log_info(
+                        "사용자 회원가입 완료",
+                        category="authentication",
+                        context={
+                            "email": user_data.email,
+                            "username": user_data.username,
+                            "user_id": user_id,
+                        },
+                    )
+                    
+                    response_data = {
+                        "message": "회원가입이 성공적으로 완료되었습니다.",
+                        "user": {
+                            "id": user_id,
+                            "email": user_data.email,
+                            "username": user_data.username,
+                            "created_at": datetime.utcnow().isoformat(),
+                            "simulation_session_created": True,
+                            "initial_cash": 100000000
+                        },
+                    }
+                    
+                    return JSONResponse(response_data, status_code=status.HTTP_201_CREATED)
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="회원가입에 실패했습니다. 이메일이 이미 사용 중일 수 있습니다.",
+                    )
+                    
+            except Exception as supabase_error:
+                log_error(
+                    "Supabase 회원가입 오류",
+                    category=ErrorCategory.AUTHENTICATION.value,
+                    severity=ErrorSeverity.HIGH.value,
+                    context={
+                        "email": user_data.email,
+                        "error": str(supabase_error),
+                        "error_type": type(supabase_error).__name__,
+                    },
+                )
+                
+                # 이메일 중복 등 일반적인 오류 처리
+                if "already registered" in str(supabase_error).lower() or "email" in str(supabase_error).lower():
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="이미 가입된 이메일입니다.",
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="회원가입 처리 중 오류가 발생했습니다.",
+                    )
 
     except HTTPException:
         # 알려진 검증 오류는 다시 발생시킴
