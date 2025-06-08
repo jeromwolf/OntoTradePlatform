@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 interface UserProfile {
@@ -13,17 +14,30 @@ interface UserProfile {
 }
 
 const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [formData, setFormData] = useState({
     full_name: "",
     website: "",
     bio: "",
   });
+
+  const t = (ko: string, en: string) => (language === "ko" ? ko : en);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const getProfile = useCallback(async () => {
     try {
@@ -88,7 +102,10 @@ const ProfilePage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      if (!user) throw new Error("사용자가 로그인되지 않았습니다");
+      if (!user)
+        throw new Error(
+          t("사용자가 로그인되지 않았습니다", "User is not logged in"),
+        );
 
       const updates = {
         id: user.id,
@@ -105,7 +122,9 @@ const ProfilePage: React.FC = () => {
       setProfile((prev) => (prev ? { ...prev, ...updates } : null));
       setIsEditing(false);
     } catch {
-      setError("프로필 업데이트에 실패했습니다.");
+      setError(
+        t("프로필 업데이트에 실패했습니다.", "Failed to update profile."),
+      );
     } finally {
       setLoading(false);
     }
@@ -117,7 +136,7 @@ const ProfilePage: React.FC = () => {
       setError(null);
 
       if (!event.target.files || event.target.files.length === 0) {
-        throw new Error("파일을 선택해주세요.");
+        throw new Error(t("파일을 선택해주세요.", "Please select a file."));
       }
 
       const file = event.target.files[0];
@@ -144,7 +163,7 @@ const ProfilePage: React.FC = () => {
 
       setProfile((prev) => (prev ? { ...prev, avatar_url: publicUrl } : null));
     } catch {
-      setError("아바타 업로드에 실패했습니다.");
+      setError(t("아바타 업로드에 실패했습니다.", "Failed to upload avatar."));
     } finally {
       setUploading(false);
     }
@@ -157,201 +176,601 @@ const ProfilePage: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  if (loading) {
+  if (loading && !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0a0e27",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#e2e8f0",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              border: "3px solid #1e293b",
+              borderTop: "3px solid #3b82f6",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          ></div>
+          <div>{t("프로필을 불러오는 중...", "Loading profile...")}</div>
+        </div>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
       </div>
     );
   }
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            프로필을 찾을 수 없습니다
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0a0e27",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#e2e8f0",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ fontSize: "20px", marginBottom: "16px" }}>
+            {t("프로필을 찾을 수 없습니다", "Profile not found")}
           </h2>
-          <p className="text-gray-600">로그인 후 다시 시도해주세요.</p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            style={{
+              padding: "12px 24px",
+              background: "#3b82f6",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+            }}
+          >
+            {t("대시보드로 돌아가기", "Back to Dashboard")}
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-      <div className="max-w-3xl mx-auto sm:px-6 lg:px-8">
-        <div className="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-          {/* 헤더 */}
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  사용자 프로필
-                </h3>
-                <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                  개인 정보 및 설정을 관리하세요.
-                </p>
-              </div>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                {isEditing ? "취소" : "수정"}
-              </button>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0a0e27",
+        color: "#e2e8f0",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}
+    >
+      {/* 헤더 */}
+      <div
+        style={{
+          background: "#131629",
+          borderBottom: "1px solid #1e293b",
+          padding: "16px 24px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* 로고 및 네비게이션 */}
+          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+            <button
+              onClick={() => navigate("/dashboard")}
+              style={{
+                color: "#3b82f6",
+                fontSize: "20px",
+                fontWeight: "bold",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              ⚡ OntoTrade
+            </button>
+            <div
+              style={{
+                color: "#64748b",
+                fontSize: "14px",
+              }}
+            >
+              👤 {t("프로필 관리", "Profile Management")}
             </div>
           </div>
 
-          {/* 프로필 내용 */}
-          <div className="px-4 py-5 sm:p-6">
-            <div className="space-y-6">
-              {/* 아바타 섹션 */}
-              <div className="flex items-center space-x-6">
-                <div className="relative">
-                  <img
-                    className="h-24 w-24 rounded-full object-cover"
-                    src={
-                      profile.avatar_url ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email)}&background=6366f1&color=fff`
-                    }
-                    alt="프로필 사진"
-                  />
-                  {isEditing && (
-                    <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer text-white text-xs font-medium">
-                      {uploading ? "업로드..." : "변경"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={uploadAvatar}
-                        disabled={uploading}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900">
-                    {profile.full_name || "이름 없음"}
-                  </h4>
-                  <p className="text-sm text-gray-500">{profile.email}</p>
-                  <p className="text-xs text-gray-400">
-                    마지막 업데이트:{" "}
-                    {profile.updated_at
-                      ? new Date(profile.updated_at).toLocaleDateString("ko-KR")
-                      : "정보 없음"}
-                  </p>
-                </div>
-              </div>
+          {/* 사용자 컨트롤 */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ display: "flex", gap: "4px" }}>
+              <button
+                onClick={() => setLanguage("ko")}
+                style={{
+                  padding: "6px 12px",
+                  background: language === "ko" ? "#3b82f6" : "transparent",
+                  color: language === "ko" ? "white" : "#64748b",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                🇰🇷 한국어
+              </button>
+              <button
+                onClick={() => setLanguage("en")}
+                style={{
+                  padding: "6px 12px",
+                  background: language === "en" ? "#3b82f6" : "transparent",
+                  color: language === "en" ? "white" : "#64748b",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                🇺🇸 English
+              </button>
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "8px 16px",
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: "500",
+                cursor: "pointer",
+              }}
+            >
+              🚪 {t("로그아웃", "Logout")}
+            </button>
+          </div>
+        </div>
+      </div>
 
-              {/* 프로필 정보 */}
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    이름
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="이름을 입력하세요"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-gray-900">
-                      {profile.full_name || "이름이 설정되지 않았습니다"}
-                    </p>
-                  )}
-                </div>
+      {/* 프로필 내용 */}
+      <div
+        style={{
+          padding: "24px",
+        }}
+      >
+        {/* 에러 메시지 */}
+        {error && (
+          <div
+            style={{
+              background: "#ef4444",
+              color: "white",
+              padding: "12px",
+              borderRadius: "6px",
+              marginBottom: "16px",
+              fontSize: "14px",
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    이메일
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">{profile.email}</p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    이메일은 변경할 수 없습니다
-                  </p>
-                </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
+          {/* 헤더 및 편집 버튼 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                }}
+              >
+                👤 {t("사용자 프로필", "User Profile")}
+              </h1>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#64748b",
+                }}
+              >
+                {t(
+                  "개인 정보 및 설정을 관리하세요.",
+                  "Manage your personal information and settings.",
+                )}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              style={{
+                padding: "8px 16px",
+                background: isEditing ? "#1e293b" : "#3b82f6",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+              }}
+            >
+              ✏️ {isEditing ? t("취소", "Cancel") : t("수정", "Edit")}
+            </button>
+          </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    웹사이트
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="url"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="https://example.com"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-gray-900">
-                      {profile.website ? (
-                        <a
-                          href={profile.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-500"
-                        >
-                          {profile.website}
-                        </a>
-                      ) : (
-                        "웹사이트가 설정되지 않았습니다"
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    자기소개
-                  </label>
-                  {isEditing ? (
-                    <textarea
-                      name="bio"
-                      rows={4}
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="자기소개를 입력하세요"
-                    />
-                  ) : (
-                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
-                      {profile.bio || "자기소개가 설정되지 않았습니다"}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* 저장 버튼 */}
+          {/* 아바타 섹션 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "80px",
+                height: "80px",
+                borderRadius: "50%",
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={
+                  profile.avatar_url ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.email)}&background=6366f1&color=fff`
+                }
+                alt="프로필 사진"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
               {isEditing && (
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={updateProfile}
-                    disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                  >
-                    {loading ? "저장 중..." : "저장"}
-                  </button>
+                <label
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(0, 0, 0, 0.5)",
+                    color: "white",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {uploading ? "📤" : "📸"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={uploadAvatar}
+                    disabled={uploading}
+                    style={{ display: "none" }}
+                  />
+                </label>
+              )}
+            </div>
+            <div>
+              <h2
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                }}
+              >
+                {profile.full_name || t("이름 없음", "No Name")}
+              </h2>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#64748b",
+                }}
+              >
+                {profile.email}
+              </p>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                }}
+              >
+                {t("마지막 업데이트:", "Last updated:")}{" "}
+                {profile.updated_at
+                  ? new Date(profile.updated_at).toLocaleDateString(
+                      language === "ko" ? "ko-KR" : "en-US",
+                    )
+                  : t("정보 없음", "No data")}
+              </p>
+            </div>
+          </div>
+
+          {/* 프로필 정보 */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                  color: "#e2e8f0",
+                }}
+              >
+                📝 {t("이름", "Name")}
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="full_name"
+                  value={formData.full_name}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    border: "1px solid #334155",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
+                  placeholder={t("이름을 입력하세요", "Enter your name")}
+                />
+              ) : (
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#131629",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {profile.full_name ||
+                    t("이름이 설정되지 않았습니다", "Name not set")}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                  color: "#e2e8f0",
+                }}
+              >
+                📧 {t("이메일", "Email")}
+              </label>
+              <div
+                style={{
+                  padding: "12px",
+                  background: "#131629",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  color: "#e2e8f0",
+                }}
+              >
+                {profile.email}
+              </div>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  marginTop: "4px",
+                }}
+              >
+                💡 {t("이메일은 변경할 수 없습니다", "Email cannot be changed")}
+              </p>
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                  color: "#e2e8f0",
+                }}
+              >
+                🌐 {t("웹사이트", "Website")}
+              </label>
+              {isEditing ? (
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    border: "1px solid #334155",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
+                  placeholder={t("https://example.com", "https://example.com")}
+                />
+              ) : (
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#131629",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {profile.website ? (
+                    <a
+                      href={profile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "#3b82f6",
+                        textDecoration: "none",
+                      }}
+                    >
+                      🔗 {profile.website}
+                    </a>
+                  ) : (
+                    t("웹사이트가 설정되지 않았습니다", "Website not set")
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                  color: "#e2e8f0",
+                }}
+              >
+                💬 {t("자기소개", "Bio")}
+              </label>
+              {isEditing ? (
+                <textarea
+                  name="bio"
+                  rows={4}
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "#1e293b",
+                    color: "#e2e8f0",
+                    border: "1px solid #334155",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    outline: "none",
+                    resize: "vertical",
+                  }}
+                  placeholder={t("자기소개를 입력하세요", "Enter your bio")}
+                />
+              ) : (
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#131629",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    color: "#e2e8f0",
+                    whiteSpace: "pre-wrap",
+                    minHeight: "60px",
+                  }}
+                >
+                  {profile.bio ||
+                    t("자기소개가 설정되지 않았습니다", "Bio not set")}
                 </div>
               )}
             </div>
           </div>
+
+          {/* 저장 버튼 */}
+          {isEditing && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "12px",
+                paddingTop: "16px",
+                borderTop: "1px solid #1e293b",
+              }}
+            >
+              <button
+                onClick={() => setIsEditing(false)}
+                style={{
+                  padding: "10px 20px",
+                  background: "#475569",
+                  color: "#e2e8f0",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                ❌ {t("취소", "Cancel")}
+              </button>
+              <button
+                onClick={updateProfile}
+                disabled={loading}
+                style={{
+                  padding: "10px 20px",
+                  background: loading ? "#475569" : "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? "⏳" : "💾"}{" "}
+                {loading ? t("저장 중...", "Saving...") : t("저장", "Save")}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
