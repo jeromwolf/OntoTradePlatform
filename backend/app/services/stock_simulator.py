@@ -158,6 +158,34 @@ class StockDataSimulator:
         """특정 주식의 현재 데이터를 반환."""
         return self.stock_data.get(symbol)
 
+    def get_real_time_data(self, symbol: str) -> Dict:
+        """실시간 주식 데이터를 반환 (WebSocket용)."""
+        if symbol in self.stock_data:
+            # 최신 가격 업데이트를 생성하여 반환
+            return self.generate_price_update(symbol)
+        else:
+            # 새로운 종목인 경우 기본 데이터로 초기화
+            if symbol in self.stock_symbols:
+                self.initialize_stock_data()
+                return self.stock_data.get(symbol)
+            else:
+                # 알려지지 않은 종목의 경우 모의 데이터 생성
+                mock_data = {
+                    "symbol": symbol,
+                    "name": f"{symbol} Corp.",
+                    "price": round(random.uniform(50, 500), 2),
+                    "previous_close": round(random.uniform(50, 500), 2),
+                    "open": round(random.uniform(50, 500), 2),
+                    "high": round(random.uniform(50, 500), 2),
+                    "low": round(random.uniform(50, 500), 2),
+                    "volume": random.randint(1000000, 50000000),
+                    "change": round(random.uniform(-10, 10), 2),
+                    "change_percent": round(random.uniform(-5, 5), 2),
+                    "timestamp": datetime.now().isoformat(),
+                }
+                self.stock_data[symbol] = mock_data
+                return mock_data
+
     def get_all_stocks(self) -> List[Dict]:
         """모든 주식 데이터를 반환."""
         return list(self.stock_data.values())

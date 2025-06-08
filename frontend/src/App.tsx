@@ -14,6 +14,9 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ResetPasswordConfirmPage from "./pages/ResetPasswordConfirmPage";
 import ComponentsTestPage from "./pages/ComponentsTestPage";
 import WebSocketTestPage from "./pages/WebSocketTestPage";
+import PortfolioPage from "./pages/PortfolioPage";
+import TradingPage from "./pages/TradingPage";
+import DashboardPage from "./pages/DashboardPage";
 import SessionMonitor from "./components/SessionMonitor";
 import MonitoringExample from "./components/MonitoringExample";
 
@@ -32,125 +35,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   }
 
   return user ? <>{children}</> : <Navigate to="/login" replace />;
-};
-
-// 메인 대시보드 컴포넌트
-const Dashboard: React.FC = () => {
-  const { user, signOut } = useAuth();
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link
-                to="/dashboard"
-                className="text-xl font-semibold hover:text-gray-700"
-              >
-                OntoTrade Platform
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/profile"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
-              >
-                <svg
-                  className="h-5 w-5 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                프로필
-              </Link>
-              <Link
-                to="/websocket"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
-              >
-                <svg
-                  className="h-5 w-5 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-                  />
-                </svg>
-                실시간 데이터
-              </Link>
-              <Link
-                to="/components"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md flex items-center"
-              >
-                <svg
-                  className="h-5 w-5 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14-7H5m14 14H5"
-                  />
-                </svg>
-                컴포넌트
-              </Link>
-              <span className="text-gray-700">Welcome, {user?.email}</span>
-              <button
-                onClick={signOut}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-              >
-                로그아웃
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                OntoTrade Platform Dashboard
-              </h2>
-              <p className="text-gray-600 mb-8">
-                온톨로지 기반 거래 플랫폼에 오신 것을 환영합니다!
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-2">포트폴리오</h3>
-                  <p className="text-gray-600">투자 포트폴리오를 관리하세요</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-2">거래</h3>
-                  <p className="text-gray-600">실시간 거래를 시작하세요</p>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-2">분석</h3>
-                  <p className="text-gray-600">시장 분석 도구를 사용하세요</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
 };
 
 // 퍼블릭 라우트 (로그인하지 않은 사용자용)
@@ -277,7 +161,7 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <DashboardPage />
                 </ProtectedRoute>
               }
             />
@@ -286,6 +170,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/portfolio"
+              element={
+                <ProtectedRoute>
+                  <PortfolioPage />
                 </ProtectedRoute>
               }
             />
@@ -302,6 +194,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ComponentsTestPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/trading"
+              element={
+                <ProtectedRoute>
+                  <TradingPage />
                 </ProtectedRoute>
               }
             />

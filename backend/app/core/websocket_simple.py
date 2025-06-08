@@ -17,25 +17,26 @@ from app.core.logging_system import (
     log_critical,
     log_error,
     log_info,
-    log_warning,
     log_websocket_event,
     logging_system,
 )
 from app.core.monitoring import add_breadcrumb, capture_message
 from app.services.data_normalizer import data_normalizer
-from app.services.stock_simulator import StockSimulator
+from app.services.data_validator import DataSource
+from app.services.stock_simulator import StockDataSimulator  
 
 # 기존 logging 설정 제거하고 새로운 시스템 사용
 # logger = logging.getLogger(__name__)
 
 
-class WebSocketManager:
+class WebsocketManager:
     def __init__(self):
-        # Socket.IO 서버 생성
+        # Socket.IO 서버 생성 (ASGI 호환 설정)
         self.sio = AsyncServer(
             cors_allowed_origins="*",
             logger=False,  # 기본 로거 비활성화
             engineio_logger=False,
+            async_mode='asgi',  # ASGI 모드 명시적 지정
         )
 
         # 구독 관리
@@ -43,7 +44,7 @@ class WebSocketManager:
         self.session_symbols: Dict[str, Set[str]] = {}  # session_id -> set of symbols
 
         # 주식 시뮬레이터
-        self.stock_simulator = StockSimulator()
+        self.stock_simulator = StockDataSimulator()  
 
         # 이벤트 핸들러 등록
         self._register_events()
@@ -51,7 +52,7 @@ class WebSocketManager:
         # 자동 업데이트 태스크
         self.update_task = None
 
-        log_info("WebSocket 관리자 초기화 완료", logger_name="websocket")
+        log_info("WebSocket 관리자 초기화 완료")
 
     def _register_events(self):
         """Socket.IO 이벤트 핸들러 등록"""
@@ -66,7 +67,10 @@ class WebSocketManager:
                     "remote_addr": environ.get("REMOTE_ADDR", "Unknown"),
                 }
 
-                log_websocket_event("client_connected", context=client_info)
+                log_info(
+                    f"WebSocket 클라이언트 연결: {sid}",
+                    context=client_info,
+                )
 
                 add_breadcrumb(
                     message="WebSocket 클라이언트 연결",
@@ -82,10 +86,6 @@ class WebSocketManager:
             except Exception as e:
                 log_error(
                     f"클라이언트 연결 처리 중 오류: {e}",
-                    category=ErrorCategory.WEBSOCKET_ERROR,
-                    severity=ErrorSeverity.MEDIUM,
-                    context={"session_id": sid, "error": str(e)},
-                    logger_name="websocket",
                 )
 
         @self.sio.event
@@ -99,15 +99,13 @@ class WebSocketManager:
                         await self._unsubscribe_symbol(sid, symbol)
                     del self.session_symbols[sid]
 
-                log_websocket_event("client_disconnected", context={"session_id": sid})
+                log_websocket_event("client_disconnected")
 
             except Exception as e:
                 log_error(
                     f"클라이언트 연결 해제 처리 중 오류: {e}",
                     category=ErrorCategory.WEBSOCKET_ERROR,
                     severity=ErrorSeverity.LOW,
-                    context={"session_id": sid, "error": str(e)},
-                    logger_name="websocket",
                 )
 
         @self.sio.event
@@ -128,7 +126,7 @@ class WebSocketManager:
                     await protected_call(self._subscribe_symbol, sid, symbol)
 
                 log_websocket_event(
-                    "symbol_subscribed", context={"session_id": sid, "symbol": symbol}
+                    "symbol_subscribed"
                 )
 
             except Exception as e:
@@ -136,12 +134,6 @@ class WebSocketManager:
                     f"종목 구독 중 오류: {e}",
                     category=ErrorCategory.WEBSOCKET_ERROR,
                     severity=ErrorSeverity.MEDIUM,
-                    context={
-                        "session_id": sid,
-                        "symbol": data.get("symbol"),
-                        "error": str(e),
-                    },
-                    logger_name="websocket",
                 )
 
                 await self.sio.emit(
@@ -166,7 +158,7 @@ class WebSocketManager:
                 await self._unsubscribe_symbol(sid, symbol)
 
                 log_websocket_event(
-                    "symbol_unsubscribed", context={"session_id": sid, "symbol": symbol}
+                    "symbol_unsubscribed"
                 )
 
             except Exception as e:
@@ -174,12 +166,6 @@ class WebSocketManager:
                     f"종목 구독 해제 중 오류: {e}",
                     category=ErrorCategory.WEBSOCKET_ERROR,
                     severity=ErrorSeverity.LOW,
-                    context={
-                        "session_id": sid,
-                        "symbol": data.get("symbol"),
-                        "error": str(e),
-                    },
-                    logger_name="websocket",
                 )
 
         @self.sio.event
@@ -194,8 +180,7 @@ class WebSocketManager:
                 )
 
                 log_websocket_event(
-                    "subscriptions_requested",
-                    context={"session_id": sid, "count": len(symbols)},
+                    "subscriptions_requested"
                 )
 
             except Exception as e:
@@ -203,8 +188,6 @@ class WebSocketManager:
                     f"구독 목록 조회 중 오류: {e}",
                     category=ErrorCategory.WEBSOCKET_ERROR,
                     severity=ErrorSeverity.LOW,
-                    context={"session_id": sid, "error": str(e)},
-                    logger_name="websocket",
                 )
 
         @self.sio.event
@@ -215,7 +198,7 @@ class WebSocketManager:
                 await self.sio.emit("data_quality", quality_report, room=sid)
 
                 log_websocket_event(
-                    "data_quality_requested", context={"session_id": sid}
+                    "data_quality_requested"
                 )
 
             except Exception as e:
@@ -223,8 +206,6 @@ class WebSocketManager:
                     f"데이터 품질 조회 중 오류: {e}",
                     category=ErrorCategory.DATA_VALIDATION_ERROR,
                     severity=ErrorSeverity.MEDIUM,
-                    context={"session_id": sid, "error": str(e)},
-                    logger_name="websocket",
                 )
 
     async def _subscribe_symbol(self, sid: str, symbol: str):
@@ -238,10 +219,13 @@ class WebSocketManager:
         # 초기 데이터 전송
         try:
             async with logging_system.performance_monitor("stock_data_fetch"):
-                stock_data = await self.stock_simulator.get_real_time_data(symbol)
+                stock_data = self.stock_simulator.get_real_time_data(symbol)
 
                 # 데이터 정규화 및 검증
-                normalized_data = await data_normalizer.normalize_stock_data(stock_data)
+                validation_result = data_normalizer.normalize_and_validate(
+                    symbol, stock_data, DataSource.MOCK
+                )
+                normalized_data = validation_result.normalized_data if validation_result.is_valid else stock_data
 
                 await self.sio.emit(
                     "stock_data",
@@ -259,8 +243,6 @@ class WebSocketManager:
                 f"초기 데이터 전송 실패: {symbol}",
                 category=ErrorCategory.DATA_VALIDATION_ERROR,
                 severity=ErrorSeverity.MEDIUM,
-                context={"symbol": symbol, "session_id": sid, "error": str(e)},
-                logger_name="websocket",
             )
             raise
 
@@ -287,7 +269,7 @@ class WebSocketManager:
         """자동 업데이트 시작"""
         if self.update_task is None or self.update_task.done():
             self.update_task = asyncio.create_task(self._auto_update_loop())
-            log_info("WebSocket 자동 업데이트 시작", logger_name="websocket")
+            log_info("WebSocket 자동 업데이트 시작")
 
     async def _auto_update_loop(self):
         """자동 업데이트 루프"""
@@ -306,8 +288,6 @@ class WebSocketManager:
                                 f"종목 업데이트 실패: {symbol}",
                                 category=ErrorCategory.WEBSOCKET_ERROR,
                                 severity=ErrorSeverity.MEDIUM,
-                                context={"symbol": symbol, "error": str(e)},
-                                logger_name="websocket",
                             )
 
                 await asyncio.sleep(3)  # 3초마다 업데이트
@@ -317,22 +297,20 @@ class WebSocketManager:
                     f"자동 업데이트 루프 오류: {e}",
                     category=ErrorCategory.WEBSOCKET_ERROR,
                     severity=ErrorSeverity.HIGH,
-                    context={"error": str(e)},
-                    logger_name="websocket",
                 )
                 await asyncio.sleep(5)  # 오류 시 5초 대기
 
     async def _send_stock_update(self, symbol: str):
         """종목 업데이트 전송"""
         try:
-            # 주식 데이터 가져오기 (서킷 브레이커 적용)
-            async with circuit_breaker("stock_data") as protected_call:
-                stock_data = await protected_call(
-                    self.stock_simulator.get_real_time_data, symbol
-                )
+            # 주식 데이터 가져오기 (안전하게 처리)
+            stock_data = self.stock_simulator.get_real_time_data(symbol)
 
             # 데이터 정규화 및 검증
-            normalized_data = await data_normalizer.normalize_stock_data(stock_data)
+            validation_result = data_normalizer.normalize_and_validate(
+                symbol, stock_data, DataSource.MOCK
+            )
+            normalized_data = validation_result.normalized_data if validation_result.is_valid else stock_data
 
             # 이상치 탐지 결과 확인
             anomalies = normalized_data.get("anomalies", [])
@@ -341,43 +319,37 @@ class WebSocketManager:
                     f"이상치 탐지: {symbol}",
                     category=ErrorCategory.DATA_VALIDATION_ERROR,
                     severity=ErrorSeverity.MEDIUM,
-                    context={"symbol": symbol, "anomalies": anomalies},
-                    logger_name="websocket",
                 )
 
             # 구독자들에게 데이터 전송
-            session_ids = list(self.subscriptions[symbol])
-            for sid in session_ids:
-                try:
-                    await self.sio.emit(
-                        "stock_update",
-                        {
-                            "symbol": symbol,
-                            "data": normalized_data,
-                            "timestamp": datetime.now().isoformat(),
-                            "quality_score": normalized_data.get("quality_score", 0),
-                            "anomalies": anomalies,
-                        },
-                        room=sid,
-                    )
-                except Exception as e:
-                    log_error(
-                        f"클라이언트 업데이트 전송 실패: {sid}",
-                        category=ErrorCategory.WEBSOCKET_ERROR,
-                        severity=ErrorSeverity.LOW,
-                        context={"session_id": sid, "symbol": symbol, "error": str(e)},
-                        logger_name="websocket",
-                    )
+            if symbol in self.subscriptions:
+                session_ids = list(self.subscriptions[symbol])
+                for sid in session_ids:
+                    try:
+                        await self.sio.emit(
+                            "stock_data",
+                            {
+                                "symbol": symbol,
+                                "data": normalized_data,
+                                "timestamp": datetime.now().isoformat(),
+                                "quality_score": normalized_data.get("quality_score", 0),
+                            },
+                            room=sid,
+                        )
+                    except Exception as e:
+                        log_error(
+                            f"클라이언트 업데이트 전송 실패: {sid}",
+                            category=ErrorCategory.WEBSOCKET_ERROR,
+                            severity=ErrorSeverity.LOW,
+                        )
 
         except Exception as e:
             log_error(
                 f"종목 업데이트 생성 실패: {symbol}",
                 category=ErrorCategory.WEBSOCKET_ERROR,
                 severity=ErrorSeverity.MEDIUM,
-                context={"symbol": symbol, "error": str(e)},
-                logger_name="websocket",
             )
-            raise
+            # 개별 종목 실패가 전체 시스템을 멈추지 않도록 예외를 다시 던지지 않음
 
     async def stop_auto_updates(self):
         """자동 업데이트 중지"""
@@ -387,7 +359,7 @@ class WebSocketManager:
                 await self.update_task
             except asyncio.CancelledError:
                 pass
-            log_info("WebSocket 자동 업데이트 중지", logger_name="websocket")
+            log_info("WebSocket 자동 업데이트 중지")
 
     def get_stats(self) -> dict:
         """WebSocket 통계 정보"""
@@ -406,10 +378,40 @@ class WebSocketManager:
             and not self.update_task.done(),
         }
 
-        log_info("WebSocket 통계 조회", context=stats, logger_name="websocket")
+        log_info("WebSocket 통계 조회")
 
         return stats
 
 
 # 전역 WebSocket 관리자 인스턴스
-websocket_manager = WebSocketManager()
+websocket_manager = WebsocketManager()
+
+
+def get_websocket_stats():
+    """WebSocket 통계 정보를 반환하는 함수"""
+    return websocket_manager.get_stats()
+
+
+# Socket.IO ASGI 앱 생성
+sio_asgi_app = socketio.ASGIApp(websocket_manager.sio)
+
+# WebSocket 자동 시작 함수
+async def start_websocket_updates():
+    """WebSocket 자동 업데이트 시작"""
+    await websocket_manager.start_auto_updates()
+    log_info("WebSocket 자동 업데이트 시작됨")
+
+# Socket.IO 앱을 얻는 함수  
+def get_socket_app():
+    """Socket.IO ASGI 앱을 반환"""
+    return sio_asgi_app
+
+# WebSocket 관련 FastAPI 라우트들
+from fastapi import APIRouter
+
+ws_router = APIRouter()
+
+@ws_router.get("/ws/stats")
+async def websocket_stats():
+    """WebSocket 통계 API 엔드포인트"""
+    return websocket_manager.get_stats()

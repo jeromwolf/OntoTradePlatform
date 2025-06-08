@@ -1,6 +1,11 @@
 """Supabase 클라이언트 설정 및 인증 유틸리티."""
 
 import os
+from dotenv import load_dotenv
+
+# .env 파일을 명시적으로 로드
+load_dotenv()
+
 from typing import Any, Dict, Optional
 
 import jwt
@@ -32,7 +37,7 @@ class SupabaseClient:
         """환경변수에서 Supabase 설정 로드."""
         return SupabaseConfig(
             url=os.getenv("SUPABASE_URL", ""),
-            service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
+            service_role_key=os.getenv("SUPABASE_SERVICE_KEY", ""),
             anon_key=os.getenv("SUPABASE_ANON_KEY", ""),
             jwt_secret=os.getenv("SUPABASE_JWT_SECRET", ""),
         )

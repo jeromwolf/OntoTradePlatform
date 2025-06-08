@@ -5,7 +5,7 @@ import {
 } from "../components/trading/StockRealTimeDisplay";
 import { useWebSocketMonitor } from "../hooks/useWebSocket";
 import { Button } from "../components/ui/Button";
-import { websocketService } from "../services/websocket";
+import websocketService from "../services/websocket";
 import DataQualityDashboard from "../components/DataQuality/DataQualityDashboard";
 
 /**
@@ -13,21 +13,23 @@ import DataQualityDashboard from "../components/DataQuality/DataQualityDashboard
  */
 const WebSocketTestPage: React.FC = () => {
   const [showMonitor, setShowMonitor] = useState(false);
+  const [activeTab, setActiveTab] = useState<"realtime" | "quality">("realtime");
   const [subscribedSymbols, setSubscribedSymbols] = useState<string[]>([
     "AAPL",
-    "GOOGL",
+    "GOOGL", 
     "MSFT",
   ]);
   const {
     connectionHistory,
-    reconnectAttempts,
-    getConnectionStats,
+    stats,
     isConnected,
+    connectionStatus,
   } = useWebSocketMonitor();
 
-  const stats = getConnectionStats();
   const successRate =
-    stats.total > 0 ? (stats.connected / stats.total) * 100 : 0;
+    stats.totalConnections > 0 
+      ? ((stats.totalConnections - stats.totalErrors) / stats.totalConnections) * 100 
+      : 0;
 
   useEffect(() => {
     if (isConnected && subscribedSymbols.length > 0) {
@@ -36,7 +38,7 @@ const WebSocketTestPage: React.FC = () => {
         subscribedSymbols,
       );
       subscribedSymbols.forEach((symbol) => {
-        websocketService.subscribeToStock(symbol);
+        websocketService.subscribe(symbol);
         console.log(`${symbol} 구독 요청 전송`);
       });
     }
@@ -47,7 +49,7 @@ const WebSocketTestPage: React.FC = () => {
     if (!subscribedSymbols.includes(upperSymbol)) {
       setSubscribedSymbols((prev) => [...prev, upperSymbol]);
       if (isConnected) {
-        websocketService.subscribeToStock(upperSymbol);
+        websocketService.subscribe(upperSymbol);
       }
     }
   };
@@ -55,14 +57,17 @@ const WebSocketTestPage: React.FC = () => {
   const handleRemoveSymbol = (symbol: string) => {
     setSubscribedSymbols((prev) => prev.filter((s) => s !== symbol));
     if (isConnected) {
-      websocketService.unsubscribeFromStock(symbol);
+      websocketService.unsubscribe(symbol);
     }
   };
 
   const handleReconnectAll = () => {
     websocketService.disconnect();
     setTimeout(() => {
-      websocketService.connect();
+      // WebSocket 서비스는 자동으로 재연결을 시도합니다
+      subscribedSymbols.forEach((symbol) => {
+        websocketService.subscribe(symbol);
+      });
     }, 1000);
   };
 
@@ -90,6 +95,32 @@ const WebSocketTestPage: React.FC = () => {
         </div>
       </div>
 
+      {/* 탭 메뉴 */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("realtime")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "realtime"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            실시간 데이터
+          </button>
+          <button
+            onClick={() => setActiveTab("quality")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "quality"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            데이터 품질
+          </button>
+        </nav>
+      </div>
+
       {/* 연결 상태 모니터 */}
       {showMonitor && (
         <div className="bg-white p-6 rounded-lg border shadow-sm">
@@ -105,7 +136,7 @@ const WebSocketTestPage: React.FC = () => {
 
             <div className="p-4 bg-yellow-50 rounded-lg">
               <div className="text-2xl font-bold text-yellow-600">
-                {reconnectAttempts}
+                {connectionStatus.reconnectAttempts}
               </div>
               <div className="text-sm text-yellow-800">재연결 시도</div>
             </div>
@@ -118,13 +149,23 @@ const WebSocketTestPage: React.FC = () => {
               </div>
               <div className="text-sm text-gray-800">연결 상태</div>
             </div>
+
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {subscribedSymbols.length}
+              </div>
+              <div className="text-sm text-green-800">구독 종목</div>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">연결 히스토리</h3>
-            <div className="max-h-40 overflow-y-auto">
-              <div className="space-y-2">
-                {connectionHistory
+          {/* 연결 히스토리 */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-medium text-gray-800 mb-2">연결 히스토리</h3>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {connectionHistory.length === 0 ? (
+                <div className="text-gray-500 text-sm">연결 기록이 없습니다</div>
+              ) : (
+                connectionHistory
                   .slice(-10)
                   .reverse()
                   .map((entry, index) => (
@@ -133,12 +174,12 @@ const WebSocketTestPage: React.FC = () => {
                       className="flex items-center justify-between text-sm"
                     >
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${
+                        className={`px-2 py-1 rounded text-xs ${
                           entry.status === "connected"
                             ? "bg-green-100 text-green-800"
-                            : entry.status === "connecting"
+                            : entry.status === "disconnected"
                               ? "bg-yellow-100 text-yellow-800"
-                              : entry.status === "error"
+                              : entry.status.includes("error")
                                 ? "bg-red-100 text-red-800"
                                 : "bg-gray-100 text-gray-800"
                         }`}
@@ -149,27 +190,30 @@ const WebSocketTestPage: React.FC = () => {
                         {new Date(entry.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                  ))}
-              </div>
+                  ))
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 실시간 주식 데이터 */}
-      <div className="bg-white p-6 rounded-lg border shadow-sm">
-        <StockSubscriptionManager
-          subscribedSymbols={subscribedSymbols}
-          onAddSymbol={handleAddSymbol}
-          onRemoveSymbol={handleRemoveSymbol}
-          onReconnectAll={handleReconnectAll}
-        />
-      </div>
+      {/* 탭 컨텐츠 */}
+      {activeTab === "realtime" && (
+        <div className="bg-white p-6 rounded-lg border shadow-sm">
+          <StockSubscriptionManager
+            subscribedSymbols={subscribedSymbols}
+            onAddSymbol={handleAddSymbol}
+            onRemoveSymbol={handleRemoveSymbol}
+            onReconnectAll={handleReconnectAll}
+          />
+        </div>
+      )}
 
-      {/* 데이터 품질 대시보드 */}
-      <div className="bg-white p-6 rounded-lg border shadow-sm">
-        <DataQualityDashboard />
-      </div>
+      {activeTab === "quality" && (
+        <div className="bg-white p-6 rounded-lg border shadow-sm">
+          <DataQualityDashboard />
+        </div>
+      )}
 
       {/* 사용 가이드 */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border">
@@ -217,15 +261,15 @@ const WebSocketTestPage: React.FC = () => {
               WebSocket 엔드포인트
             </h3>
             <code className="text-xs bg-gray-200 p-2 rounded block">
-              ws://localhost:8000/ws
+              ws://localhost:8000/socket.io/
             </code>
           </div>
           <div>
             <h3 className="font-medium text-gray-800 mb-2">재연결 설정</h3>
             <ul className="text-gray-600 space-y-1">
               <li>• 자동 재연결: 활성화</li>
-              <li>• 최대 재시도: 5회</li>
-              <li>• 재연결 간격: 1-10초</li>
+              <li>• 최대 재시도: 무제한</li>
+              <li>• 재연결 간격: 1-5초</li>
             </ul>
           </div>
           <div>

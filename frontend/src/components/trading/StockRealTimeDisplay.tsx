@@ -25,10 +25,8 @@ export const StockRealTimeDisplay: React.FC<StockRealTimeDisplayProps> = ({
   symbol,
   className = "",
 }) => {
-  const { stockData, lastUpdate, error, isSubscribed, resubscribe } =
-    useStockSubscription(symbol);
-  const { priceDirection, getPriceChange } = useStockChanges(symbol);
-  const minuteChange = getPriceChange("minute");
+  const { stockData, error, isLoading } = useStockSubscription(symbol);
+  const { priceDirection, lastUpdate, priceChange } = useStockChanges(symbol);
 
   if (error) {
     return (
@@ -42,15 +40,12 @@ export const StockRealTimeDisplay: React.FC<StockRealTimeDisplayProps> = ({
             </h3>
             <p className="text-sm text-red-600">연결 오류: {error}</p>
           </div>
-          <Button onClick={resubscribe} variant="secondary" size="sm">
-            재연결
-          </Button>
         </div>
       </div>
     );
   }
 
-  if (!stockData) {
+  if (isLoading || !stockData) {
     return (
       <div
         className={`p-4 border border-gray-200 rounded-lg bg-gray-50 ${className}`}
@@ -86,7 +81,7 @@ export const StockRealTimeDisplay: React.FC<StockRealTimeDisplayProps> = ({
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-semibold text-lg">{stockData.symbol}</h3>
         <div className="flex items-center space-x-1">
-          {isSubscribed && <WifiIcon className="h-4 w-4 text-green-500" />}
+          <WifiIcon className="h-4 w-4 text-green-500" />
           {priceDirection === "up" && (
             <ArrowUpIcon className="h-4 w-4 text-green-500" />
           )}
@@ -104,14 +99,14 @@ export const StockRealTimeDisplay: React.FC<StockRealTimeDisplayProps> = ({
         <div className="flex items-center space-x-4 text-sm">
           <span className={changeColor}>
             {stockData.change > 0 ? "+" : ""}
-            {stockData.change.toFixed(2)}(
-            {parseFloat(stockData.change_percent).toFixed(2)}%)
+            {stockData.change.toFixed(2)} (
+            {stockData.change_percent.toFixed(2)}%)
           </span>
 
-          {minuteChange && (
+          {priceChange.amount !== 0 && (
             <span className="text-gray-500">
-              1분: {minuteChange > 0 ? "+" : ""}
-              {minuteChange.toFixed(2)}
+              변화: {priceChange.amount > 0 ? "+" : ""}
+              {priceChange.amount.toFixed(2)}
             </span>
           )}
         </div>
@@ -136,8 +131,8 @@ export const StockRealTimeDisplay: React.FC<StockRealTimeDisplayProps> = ({
         </div>
 
         {lastUpdate && (
-          <div className="text-xs text-gray-400 pt-2 border-t">
-            마지막 업데이트: {new Date(lastUpdate).toLocaleTimeString()}
+          <div className="text-xs text-gray-500 pt-2 border-t">
+            마지막 업데이트: {lastUpdate.toLocaleTimeString()}
           </div>
         )}
       </div>
@@ -159,18 +154,14 @@ export const MultiStockDisplay: React.FC<MultiStockDisplayProps> = ({
   className = "",
   compact = false,
 }) => {
-  const { stocksData, errors, resubscribeAll } =
-    useMultipleStockSubscriptions(symbols);
+  const { getStockData, errors } = useMultipleStockSubscriptions(symbols);
 
-  if (!stocksData) {
+  if (symbols.length === 0) {
     return (
-      <div
-        className={`p-4 border border-yellow-200 rounded-lg bg-yellow-50 ${className}`}
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-yellow-800">WebSocket 연결 중...</span>
-          <SignalIcon className="h-5 w-5 animate-pulse text-yellow-600" />
-        </div>
+      <div className={`text-center p-8 text-gray-500 ${className}`}>
+        <SignalIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+        <p>구독 중인 종목이 없습니다</p>
+        <p className="text-sm">위에서 종목 코드를 입력해 주세요</p>
       </div>
     );
   }
@@ -179,87 +170,62 @@ export const MultiStockDisplay: React.FC<MultiStockDisplayProps> = ({
     return (
       <div className={`space-y-2 ${className}`}>
         {symbols.map((symbol) => {
-          const data = stocksData[symbol.toUpperCase()];
-          if (!data) {
-            return (
-              <div
-                key={symbol}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded"
-              >
-                <span className="text-sm text-gray-600">
-                  {symbol.toUpperCase()}
-                </span>
-                <span className="text-xs text-gray-400">로딩 중...</span>
-              </div>
-            );
-          }
-
+          const stockData = getStockData(symbol);
           const changeColor =
-            data.change > 0
+            stockData && stockData.change > 0
               ? "text-green-600"
-              : data.change < 0
+              : stockData && stockData.change < 0
                 ? "text-red-600"
                 : "text-gray-600";
 
           return (
             <div
               key={symbol}
-              className="flex items-center justify-between p-2 bg-white border rounded"
+              className="flex items-center justify-between p-3 bg-white border rounded"
             >
-              <span className="font-medium text-sm">{data.symbol}</span>
-              <div className="text-right">
-                <div className="font-semibold">${data.price.toFixed(2)}</div>
-                <div className={`text-xs ${changeColor}`}>
-                  {data.change > 0 ? "+" : ""}
-                  {parseFloat(data.change_percent).toFixed(2)}%
-                </div>
+              <div className="flex items-center space-x-3">
+                <span className="font-medium">{symbol}</span>
+                {stockData ? (
+                  <span className="text-lg font-semibold">
+                    ${stockData.price.toFixed(2)}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">로딩 중...</span>
+                )}
               </div>
+              {stockData && (
+                <span className={`text-sm ${changeColor}`}>
+                  {stockData.change > 0 ? "+" : ""}
+                  {stockData.change.toFixed(2)} (
+                  {stockData.change_percent.toFixed(2)}%)
+                </span>
+              )}
             </div>
           );
         })}
-
-        {errors.length > 0 && (
-          <div className="p-2 bg-red-50 border border-red-200 rounded">
-            <p className="text-xs text-red-600">{errors.length}개 오류 발생</p>
-            <Button
-              onClick={resubscribeAll}
-              variant="secondary"
-              size="sm"
-              className="mt-1"
-            >
-              재연결
-            </Button>
-          </div>
-        )}
       </div>
     );
   }
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">실시간 주식 현황</h3>
-        <Button onClick={resubscribeAll} variant="secondary" size="sm">
-          모두 재연결
-        </Button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {symbols.map((symbol) => (
-          <StockRealTimeDisplay key={symbol} symbol={symbol} />
-        ))}
-      </div>
-
       {errors.length > 0 && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <h4 className="font-medium text-red-800 mb-2">연결 오류</h4>
-          <ul className="text-sm text-red-600 space-y-1">
-            {errors.map((error, index) => (
-              <li key={index}>• {error}</li>
-            ))}
-          </ul>
+        <div className="p-3 bg-red-50 border border-red-200 rounded">
+          <p className="text-sm text-red-600">
+            오류: {errors.join(", ")}
+          </p>
         </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {symbols.map((symbol) => (
+          <StockRealTimeDisplay
+            key={symbol}
+            symbol={symbol}
+            className="h-full"
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -369,7 +335,7 @@ export const StockSubscriptionManager: React.FC<
 export const ConnectionStatus: React.FC<{ className?: string }> = ({
   className = "",
 }) => {
-  const { connectionStatus, reconnectAttempts } = useWebSocket();
+  const { isConnected, connectionStatus } = useWebSocket();
 
   const statusConfig = {
     connected: {
@@ -399,7 +365,8 @@ export const ConnectionStatus: React.FC<{ className?: string }> = ({
     },
   };
 
-  const config = statusConfig[connectionStatus];
+  const status = isConnected ? "connected" : "disconnected";
+  const config = statusConfig[status] || statusConfig.disconnected;
   const Icon = config.icon;
 
   return (
@@ -407,9 +374,9 @@ export const ConnectionStatus: React.FC<{ className?: string }> = ({
       <div className={`w-2 h-2 rounded-full ${config.color}`}></div>
       <Icon className="h-4 w-4 text-gray-600" />
       <span className="text-sm text-gray-700">{config.text}</span>
-      {reconnectAttempts > 0 && (
+      {connectionStatus.reconnectAttempts > 0 && (
         <span className="text-xs text-gray-500">
-          (재연결 {reconnectAttempts}회)
+          (재연결 {connectionStatus.reconnectAttempts}회)
         </span>
       )}
     </div>

@@ -1,388 +1,172 @@
-// 주식 시세 데이터 타입
-export interface StockQuote {
+import { io, Socket } from "socket.io-client";
+
+interface StockQuote {
   symbol: string;
   price: number;
-  open: number;
+  change: number;
+  change_percent: number;
   high: number;
   low: number;
+  open: number;
   volume: number;
-  change: number;
-  change_percent: string;
+  market_cap?: number;
+  pe_ratio?: number;
+  dividend_yield?: number;
   timestamp: string;
-  source: string;
-  validated_at?: string;
-}
-
-// WebSocket 이벤트 타입
-export interface WebSocketEvents {
-  stock_update: (data: StockQuote) => void;
-  connect: () => void;
-  disconnect: () => void;
-  connect_error: (error: Error) => void;
-  error: (error: string) => void;
-  subscription_confirmed: (data: { symbol: string; status: string }) => void;
-  subscription_cancelled: (data: { symbol: string; status: string }) => void;
-  current_subscriptions: (data: any) => void;
-  market_status: (data: any) => void;
-  all_stocks: (data: any) => void;
-  pong: (data: any) => void;
-}
-
-// WebSocket 메시지 타입
-export interface WebSocketMessage {
-  type: string;
-  symbol?: string;
-  data?: StockQuote | any;
-  message?: string;
-}
-
-/**
- * WebSocket 연결 상태
- */
-export enum ConnectionStatus {
-  DISCONNECTED = "disconnected",
-  CONNECTING = "connecting",
-  CONNECTED = "connected",
-  RECONNECTING = "reconnecting",
-  ERROR = "error",
 }
 
 class WebSocketService {
-  private ws: WebSocket | null = null;
+  private socket: Socket | null = null;
+  private eventListeners: Map<string, Function[]> = new Map();
+  private isConnecting = false;
+  private reconnectTimer: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private reconnectInterval = 3000;
-  private reconnectTimer: NodeJS.Timeout | null = null;
-  private pingInterval: NodeJS.Timeout | null = null;
+  private reconnectDelay = 1000;
+  private subscribedSymbols = new Set<string>(); // 구독 상태 추적
 
-  private listeners: {
-    [key: string]: Array<(data: any) => void>;
-  } = {};
-
-  private connectionStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED;
-  private statusListeners: Array<(status: ConnectionStatus) => void> = [];
-
-  constructor(private url: string = "ws://localhost:8000/ws") {
-    this.setupEventListeners();
+  constructor() {
+    this.connect();
   }
 
-  /**
-   * WebSocket 연결
-   */
-  connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        resolve();
-        return;
-      }
+  private connect() {
+    if (this.isConnecting || this.socket?.connected) {
+      return;
+    }
 
-      this.setConnectionStatus(ConnectionStatus.CONNECTING);
+    this.isConnecting = true;
+    console.log("Socket.IO 연결 시도 중...");
 
-      try {
-        this.ws = new WebSocket(this.url);
+    // Socket.IO 클라이언트 생성
+    this.socket = io("http://localhost:8000", {
+      transports: ["polling", "websocket"],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: this.maxReconnectAttempts,
+      reconnectionDelay: this.reconnectDelay,
+    });
 
-        this.ws.onopen = () => {
-          console.log("WebSocket 연결됨");
-          this.reconnectAttempts = 0;
-          this.setConnectionStatus(ConnectionStatus.CONNECTED);
-          this.startPingInterval();
-          resolve();
-        };
+    // 연결 이벤트 설정
+    this.socket.on("connect", () => {
+      console.log("Socket.IO 연결 성공:", this.socket?.id);
+      this.isConnecting = false;
+      this.reconnectAttempts = 0;
+      this.emit("connected", { status: "connected" });
+    });
 
-        this.ws.onmessage = (event) => {
-          try {
-            const message: WebSocketMessage = JSON.parse(event.data);
-            this.handleMessage(message);
-          } catch (error) {
-            console.error("WebSocket 메시지 파싱 오류:", error);
-          }
-        };
+    this.socket.on("disconnect", (reason) => {
+      console.log("Socket.IO 연결 해제:", reason);
+      this.isConnecting = false;
+      this.emit("disconnected", { reason });
+    });
 
-        this.ws.onclose = (event) => {
-          console.log("WebSocket 연결 해제됨:", event.code, event.reason);
-          this.setConnectionStatus(ConnectionStatus.DISCONNECTED);
-          this.stopPingInterval();
+    this.socket.on("connect_error", (error) => {
+      console.error("Socket.IO 연결 오류:", error);
+      this.isConnecting = false;
+      this.emit("error", `연결 오류: ${error.message}`);
+    });
 
-          if (
-            !event.wasClean &&
-            this.reconnectAttempts < this.maxReconnectAttempts
-          ) {
-            this.scheduleReconnect();
-          }
-        };
+    // 주식 데이터 이벤트 리스너 (백엔드와 일치하도록 stock_data 사용)
+    this.socket.on("stock_data", (data) => {
+      this.emit("stock_data", data);
+    });
 
-        this.ws.onerror = (error) => {
-          console.error("WebSocket 오류:", error);
-          this.setConnectionStatus(ConnectionStatus.ERROR);
-          reject(error);
-        };
-      } catch (error) {
-        console.error("WebSocket 연결 실패:", error);
-        this.setConnectionStatus(ConnectionStatus.ERROR);
-        reject(error);
-      }
+    this.socket.on("subscription_confirmed", (data) => {
+      console.log("구독 확인:", data);
+      this.emit("subscription_confirmed", data);
+    });
+
+    this.socket.on("unsubscription_confirmed", (data) => {
+      console.log("구독 해제 확인:", data);
+      this.emit("unsubscription_confirmed", data);
     });
   }
 
-  /**
-   * WebSocket 연결 해제
-   */
-  disconnect(): void {
+  public isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
+  public subscribe(symbol: string): void {
+    if (!this.socket?.connected) {
+      console.warn("Socket.IO가 연결되지 않았습니다. 연결 후 다시 시도하세요.");
+      return;
+    }
+
+    if (this.subscribedSymbols.has(symbol.toUpperCase())) {
+      console.log(`이미 구독 중인 종목: ${symbol}`);
+      return;
+    }
+
+    console.log(`종목 구독: ${symbol}`);
+    this.socket.emit("subscribe", { symbol: symbol.toUpperCase() });
+    this.subscribedSymbols.add(symbol.toUpperCase());
+  }
+
+  public unsubscribe(symbol: string): void {
+    if (!this.socket?.connected) {
+      return;
+    }
+
+    if (!this.subscribedSymbols.has(symbol.toUpperCase())) {
+      console.log(`구독 중이지 않은 종목: ${symbol}`);
+      return;
+    }
+
+    console.log(`종목 구독 해제: ${symbol}`);
+    this.socket.emit("unsubscribe", { symbol: symbol.toUpperCase() });
+    this.subscribedSymbols.delete(symbol.toUpperCase());
+  }
+
+  public getConnectionStatus(): { connected: boolean; reconnectAttempts: number } {
+    return {
+      connected: this.isConnected(),
+      reconnectAttempts: this.reconnectAttempts,
+    };
+  }
+
+  public disconnect(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
 
-    this.stopPingInterval();
-
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
 
-    this.setConnectionStatus(ConnectionStatus.DISCONNECTED);
+    this.eventListeners.clear();
   }
 
-  /**
-   * 주식 데이터 구독
-   */
-  subscribeToStock(symbol: string): void {
-    if (this.isConnected()) {
-      this.send({
-        type: "subscribe",
-        symbol: symbol.toUpperCase(),
-      });
-    } else {
-      console.warn(
-        "WebSocket이 연결되지 않았습니다. 구독 요청을 보낼 수 없습니다.",
-      );
+  public addEventListener(event: string, callback: Function): void {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
     }
+    this.eventListeners.get(event)!.push(callback);
   }
 
-  /**
-   * 주식 데이터 구독 해제
-   */
-  unsubscribeFromStock(symbol: string): void {
-    if (this.isConnected()) {
-      this.send({
-        type: "unsubscribe",
-        symbol: symbol.toUpperCase(),
-      });
-    }
-  }
-
-  /**
-   * 현재 구독 목록 요청
-   */
-  getSubscriptions(): void {
-    if (this.isConnected()) {
-      this.send({
-        type: "get_subscriptions",
-      });
-    }
-  }
-
-  /**
-   * 이벤트 리스너 등록
-   */
-  on(event: string, callback: (data: any) => void): void {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
-    this.listeners[event].push(callback);
-  }
-
-  /**
-   * 이벤트 리스너 제거
-   */
-  off(event: string, callback: (data: any) => void): void {
-    if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(
-        (cb) => cb !== callback,
-      );
-    }
-  }
-
-  /**
-   * 연결 상태 리스너 등록
-   */
-  onStatusChange(callback: (status: ConnectionStatus) => void): void {
-    this.statusListeners.push(callback);
-  }
-
-  /**
-   * 연결 상태 리스너 제거
-   */
-  offStatusChange(callback: (status: ConnectionStatus) => void): void {
-    this.statusListeners = this.statusListeners.filter((cb) => cb !== callback);
-  }
-
-  /**
-   * 연결 상태 확인
-   */
-  isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
-  }
-
-  /**
-   * 현재 연결 상태 반환
-   */
-  getConnectionStatus(): ConnectionStatus {
-    return this.connectionStatus;
-  }
-
-  /**
-   * 현재 재연결 시도 횟수 반환
-   */
-  getReconnectAttempts(): number {
-    return this.reconnectAttempts;
-  }
-
-  /**
-   * 메시지 전송
-   */
-  private send(message: any): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
-    }
-  }
-
-  /**
-   * 메시지 처리
-   */
-  private handleMessage(message: WebSocketMessage): void {
-    console.log("WebSocket 메시지 수신:", message);
-
-    switch (message.type) {
-      case "stock_update":
-        this.emit("stock_update", message.data);
-        break;
-      case "subscription_confirmed":
-        this.emit("subscription_confirmed", {
-          symbol: message.symbol,
-          status: "subscribed",
-        });
-        break;
-      case "subscription_cancelled":
-        this.emit("subscription_cancelled", {
-          symbol: message.symbol,
-          status: "unsubscribed",
-        });
-        break;
-      case "current_subscriptions":
-        this.emit("current_subscriptions", message.data);
-        break;
-      case "market_status":
-        this.emit("market_status", message.data);
-        break;
-      case "all_stocks":
-        this.emit("all_stocks", message.data);
-        break;
-      case "pong":
-        this.emit("pong", message);
-        break;
-      case "error":
-        this.emit("error", message.message || "알 수 없는 오류");
-        break;
-      default:
-        console.warn("알 수 없는 메시지 타입:", message.type);
-    }
-  }
-
-  /**
-   * 이벤트 발생
-   */
-  private emit(event: string, data: any): void {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach((callback) => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`이벤트 리스너 오류 (${event}):`, error);
-        }
-      });
-    }
-  }
-
-  /**
-   * 연결 상태 설정
-   */
-  private setConnectionStatus(status: ConnectionStatus): void {
-    if (this.connectionStatus !== status) {
-      this.connectionStatus = status;
-      this.statusListeners.forEach((callback) => {
-        try {
-          callback(status);
-        } catch (error) {
-          console.error("상태 리스너 오류:", error);
-        }
-      });
-    }
-  }
-
-  /**
-   * 재연결 스케줄링
-   */
-  private scheduleReconnect(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-    }
-
-    this.reconnectAttempts++;
-    this.setConnectionStatus(ConnectionStatus.DISCONNECTED);
-
-    const delay =
-      this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1);
-    console.log(
-      `${delay}ms 후 재연결 시도 (${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
-    );
-
-    this.reconnectTimer = setTimeout(() => {
-      this.connect().catch(() => {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.scheduleReconnect();
-        } else {
-          console.error("최대 재연결 시도 횟수 초과");
-          this.setConnectionStatus(ConnectionStatus.ERROR);
-        }
-      });
-    }, delay);
-  }
-
-  /**
-   * 핑 인터벌 시작
-   */
-  private startPingInterval(): void {
-    this.pingInterval = setInterval(() => {
-      if (this.isConnected()) {
-        this.send({ type: "ping" });
+  public removeEventListener(event: string, callback: Function): void {
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
       }
-    }, 30000); // 30초마다 핑
-  }
-
-  /**
-   * 핑 인터벌 중지
-   */
-  private stopPingInterval(): void {
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
     }
   }
 
-  /**
-   * 이벤트 리스너 설정
-   */
-  private setupEventListeners(): void {
-    // 페이지 언로드 시 연결 해제
-    window.addEventListener("beforeunload", () => {
-      this.disconnect();
+  private emit(event: string, data: any): void {
+    const listeners = this.eventListeners.get(event) || [];
+    listeners.forEach((callback) => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`이벤트 처리 오류 (${event}):`, error);
+      }
     });
   }
 }
 
-// 전역 WebSocket 서비스 인스턴스
-const websocketService = new WebSocketService();
-
-export { websocketService };
+// 싱글톤 인스턴스
+export const websocketService = new WebSocketService();
 export default websocketService;

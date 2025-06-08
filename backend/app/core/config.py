@@ -20,10 +20,24 @@ class Settings(BaseSettings):
 
     # CORS 설정
     ALLOWED_HOSTS: List[str] = [
-        "http://localhost:5173",  # Vite 개발 서버
-        "http://localhost:3000",  # React 개발 서버 (대안)
-        "http://127.0.0.1:5173",  # localhost 대신 127.0.0.1
+        "http://localhost:3000",  # React 기본 포트
+        "http://localhost:5173",  # Vite 기본 포트
+        "http://localhost:5174",  # Vite 대체 포트 1
+        "http://localhost:5175",  # Vite 대체 포트 2
+        "http://localhost:5176",  # Vite 대체 포트 3
+        "http://localhost:5177",  # Vite 대체 포트 4
+        "http://localhost:5178",  # Vite 대체 포트 5
+        "http://localhost:5179",  # Vite 대체 포트 6
+        "http://localhost:5180",  # 새로운 Vite 개발 서버 포트
         "http://127.0.0.1:3000",  # localhost 대신 127.0.0.1
+        "http://127.0.0.1:5173",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5174",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5175",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5176",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5177",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5178",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5179",  # Vite 127.0.0.1 포트
+        "http://127.0.0.1:5180",  # 새로운 Vite 개발 서버 포트
         "https://ontotrade.vercel.app",  # 프로덕션 프론트엔드
         "https://www.ontotrade.com",  # 커스텀 도메인 (미래)
         "*",  # 개발 중 모든 오리진 허용
@@ -44,6 +58,12 @@ class Settings(BaseSettings):
     # 외부 API 설정
     ALPHA_VANTAGE_API_KEY: str = ""
     YAHOO_FINANCE_API_KEY: str = ""
+
+    # Supabase 설정
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+    SUPABASE_SERVICE_KEY: str = ""
+    SUPABASE_JWT_SECRET: str = ""
 
     # 로깅 설정
     LOG_LEVEL: str = "INFO"

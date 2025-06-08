@@ -1,14 +1,15 @@
 """OntoTrade 백엔드 메인 애플리케이션 모듈."""
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import socketio
 
-from app.api.router import api_router
 from app.core.config import settings
 from app.core.monitoring import init_sentry
-from app.core.websocket_simple import get_websocket_stats, ws_router
+from app.core.websocket_simple import websocket_manager, start_websocket_updates, ws_router
+from app.api.endpoints import portfolios, portfolio_holdings
 
 
 def create_app() -> FastAPI:
@@ -33,30 +34,17 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # API 라우터 등록
-    app.include_router(api_router, prefix="/api/v1")
-
     return app
-
-
-def configure_cors(app: FastAPI) -> None:
-    """CORS 설정을 구성합니다."""
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.ALLOWED_HOSTS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-
-def configure_routes(app: FastAPI) -> None:
-    """라우트를 구성합니다."""
-    app.include_router(api_router, prefix="/api/v1")
 
 
 # FastAPI 앱 인스턴스 생성
 app = create_app()
+
+# 앱 시작 시 WebSocket 업데이트 시작
+@app.on_event("startup")
+async def startup_event():
+    """애플리케이션 시작 시 실행되는 이벤트"""
+    await start_websocket_updates()
 
 
 @app.get("/")
@@ -69,7 +57,7 @@ async def root():
             "version": "1.0.0",
             "docs": "/docs",
             "description": "온톨로지 기반 투자 시뮬레이션 플랫폼",
-            "websocket": "/ws",
+            "websocket": "/socket.io",
         }
     )
 
@@ -83,17 +71,23 @@ async def health_check():
 @app.get("/websocket/stats")
 async def websocket_stats():
     """WebSocket 연결 통계를 제공합니다."""
-    stats = get_websocket_stats()
+    stats = websocket_manager.get_stats()
     return JSONResponse({"status": "success", "data": stats})
 
 
-# Socket.IO를 FastAPI와 통합
+# WebSocket 라우터 포함
 app.include_router(ws_router)
 
+# 포트폴리오 API 라우터 포함
+app.include_router(portfolios.router, prefix="/api/portfolios", tags=["portfolios"])
+app.include_router(portfolio_holdings.router, prefix="/api/portfolios", tags=["portfolio-holdings"])
+
+# Socket.IO와 FastAPI를 결합한 ASGI 앱 생성
+socket_app = socketio.ASGIApp(websocket_manager.sio, app, socketio_path='/socket.io')
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",  # Socket.IO 통합 앱 사용
+        "app.main:socket_app",  # Socket.IO 통합 앱 사용
         host="127.0.0.1",  # 보안상 localhost로 변경
         port=8000,
         reload=True,

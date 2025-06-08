@@ -7,8 +7,9 @@
 
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -23,11 +24,19 @@ from app.core.logging_system import (
     logging_system,
 )
 from app.core.monitoring import capture_exception, capture_message
+from app.core.auth import get_current_user_id
+from app.services.portfolio_service import PortfolioService
+from app.models.portfolio import (
+    Portfolio, PortfolioCreate, PortfolioUpdate,
+    PortfolioDetail, PortfolioSummary,
+    HoldingCreate, TransactionCreate
+)
 
 router = APIRouter()
+portfolio_service = PortfolioService()
 
 
-# 기본 스키마
+# 기본 스키마 (API 응답용)
 class PortfolioItem(BaseModel):
     symbol: str
     name: str
@@ -40,7 +49,7 @@ class PortfolioItem(BaseModel):
     unrealized_pnl_percent: float
 
 
-class Portfolio(BaseModel):
+class PortfolioResponse(BaseModel):
     id: str
     name: str
     total_value: float
@@ -62,9 +71,9 @@ class TradeOrder(BaseModel):
 
 
 @router.get("/")
-async def get_portfolios():
+async def get_portfolios(current_user_id: UUID = Depends(get_current_user_id)):
     """사용자의 포트폴리오 목록 조회"""
-    log_api_call(endpoint="GET /portfolios/", parameters={})
+    log_api_call(endpoint="GET /portfolios/", parameters={"user_id": str(current_user_id)})
 
     try:
         with logging_system.performance_monitor.measure_operation(
@@ -73,48 +82,39 @@ async def get_portfolios():
             log_info(
                 "포트폴리오 목록 조회 시작",
                 category="portfolio",
-                context={"source": "portfolio_endpoint"},
+                context={"source": "portfolio_endpoint", "user_id": str(current_user_id)},
             )
 
-            # TODO: 실제 데이터베이스에서 포트폴리오 조회
-            mock_portfolios = [
-                {
-                    "id": "portfolio_1",
-                    "name": "메인 포트폴리오",
-                    "total_value": 112500.0,
-                    "cash_balance": 25000.0,
-                    "total_invested": 87500.0,
-                    "total_return": 12500.0,
-                    "total_return_percent": 12.5,
-                    "positions_count": 5,
-                    "created_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat(),
-                },
-                {
-                    "id": "portfolio_2",
-                    "name": "테크 주식 포트폴리오",
-                    "total_value": 85300.0,
-                    "cash_balance": 15300.0,
-                    "total_invested": 70000.0,
-                    "total_return": 15300.0,
-                    "total_return_percent": 21.9,
-                    "positions_count": 3,
-                    "created_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat(),
-                },
-            ]
-
+            # 실제 데이터베이스에서 포트폴리오 조회
+            portfolios = await portfolio_service.get_portfolios(current_user_id)
+            
             response_data = {
-                "portfolios": mock_portfolios,
-                "total_portfolios": len(mock_portfolios),
+                "portfolios": [
+                    {
+                        "id": str(portfolio.id),
+                        "name": portfolio.name,
+                        "description": portfolio.description,
+                        "total_value": float(portfolio.total_value),
+                        "current_balance": float(portfolio.current_balance),
+                        "initial_balance": float(portfolio.initial_balance),
+                        "risk_level": portfolio.risk_level,
+                        "investment_goal": portfolio.investment_goal,
+                        "target_return": float(portfolio.target_return) if portfolio.target_return else None,
+                        "created_at": portfolio.created_at.isoformat(),
+                        "updated_at": portfolio.updated_at.isoformat(),
+                        "is_active": portfolio.is_active
+                    }
+                    for portfolio in portfolios
+                ],
+                "total_portfolios": len(portfolios),
             }
 
             log_info(
                 "포트폴리오 목록 조회 완료",
                 category="portfolio",
                 context={
-                    "total_portfolios": len(mock_portfolios),
-                    "total_value": sum(p["total_value"] for p in mock_portfolios),
+                    "total_portfolios": len(portfolios),
+                    "total_value": sum(float(p.total_value) for p in portfolios),
                 },
             )
 
@@ -125,11 +125,11 @@ async def get_portfolios():
             "포트폴리오 목록 조회 실패",
             category=ErrorCategory.BUSINESS_LOGIC.value,
             severity=ErrorSeverity.HIGH.value,
-            context={"error": str(e), "error_type": type(e).__name__},
+            context={"error": str(e), "error_type": type(e).__name__, "user_id": str(current_user_id)},
         )
 
         capture_exception(
-            e, {"endpoint": "GET /portfolios/", "operation": "get_portfolios"}
+            e, {"endpoint": "GET /portfolios/", "operation": "get_portfolios", "user_id": str(current_user_id)}
         )
 
         raise HTTPException(
@@ -138,12 +138,80 @@ async def get_portfolios():
         )
 
 
+@router.post("/")
+async def create_portfolio(
+    portfolio_data: PortfolioCreate,
+    current_user_id: UUID = Depends(get_current_user_id)
+):
+    """새 포트폴리오 생성"""
+    log_api_call(
+        endpoint="POST /portfolios/",
+        parameters={"user_id": str(current_user_id), "portfolio_name": portfolio_data.name}
+    )
+
+    try:
+        with logging_system.performance_monitor.measure_operation(
+            "portfolio_create"
+        ) as monitor:
+            log_info(
+                f"새 포트폴리오 생성 시작: {portfolio_data.name}",
+                category="portfolio",
+                context={"user_id": str(current_user_id)},
+            )
+
+            # 실제 포트폴리오 생성
+            portfolio = await portfolio_service.create_portfolio(current_user_id, portfolio_data)
+            
+            response_data = {
+                "id": str(portfolio.id),
+                "name": portfolio.name,
+                "description": portfolio.description,
+                "total_value": float(portfolio.total_value),
+                "current_balance": float(portfolio.current_balance),
+                "initial_balance": float(portfolio.initial_balance),
+                "risk_level": portfolio.risk_level,
+                "investment_goal": portfolio.investment_goal,
+                "target_return": float(portfolio.target_return) if portfolio.target_return else None,
+                "created_at": portfolio.created_at.isoformat(),
+                "updated_at": portfolio.updated_at.isoformat(),
+                "is_active": portfolio.is_active
+            }
+
+            log_info(
+                f"포트폴리오 생성 완료: {portfolio.name}",
+                category="portfolio",
+                context={"portfolio_id": str(portfolio.id)},
+            )
+
+            return JSONResponse(response_data, status_code=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        log_error(
+            "포트폴리오 생성 실패",
+            category=ErrorCategory.BUSINESS_LOGIC.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={"error": str(e), "error_type": type(e).__name__, "user_id": str(current_user_id)},
+        )
+
+        capture_exception(
+            e, {"endpoint": "POST /portfolios/", "operation": "create_portfolio", "user_id": str(current_user_id)}
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="포트폴리오 생성 중 오류가 발생했습니다.",
+        )
+
+
 @router.get("/{portfolio_id}")
-async def get_portfolio_detail(portfolio_id: str):
+async def get_portfolio_detail(
+    portfolio_id: str,
+    current_user_id: UUID = Depends(get_current_user_id)
+):
     """포트폴리오 상세 정보 조회"""
     log_api_call(
         endpoint="GET /portfolios/{portfolio_id}",
-        parameters={"portfolio_id": portfolio_id},
+        parameters={"portfolio_id": portfolio_id, "user_id": str(current_user_id)},
     )
 
     try:
@@ -151,107 +219,104 @@ async def get_portfolio_detail(portfolio_id: str):
             "portfolio_detail"
         ) as monitor:
             log_info(
-                "포트폴리오 상세 조회 시작",
+                f"포트폴리오 상세 조회 시작: {portfolio_id}",
                 category="portfolio",
-                context={"portfolio_id": portfolio_id, "source": "portfolio_endpoint"},
+                context={"user_id": str(current_user_id)},
             )
 
-            # TODO: 실제 포트폴리오 데이터 조회
-            if portfolio_id == "portfolio_1":
-                portfolio = Portfolio(
-                    id="portfolio_1",
-                    name="메인 포트폴리오",
-                    total_value=112500.0,
-                    cash_balance=25000.0,
-                    total_invested=87500.0,
-                    total_return=12500.0,
-                    total_return_percent=12.5,
-                    positions=[
-                        PortfolioItem(
-                            symbol="AAPL",
-                            name="Apple Inc.",
-                            name_ko="애플",
-                            quantity=50,
-                            avg_price=165.20,
-                            current_price=175.84,
-                            total_value=8792.0,
-                            unrealized_pnl=532.0,
-                            unrealized_pnl_percent=6.4,
-                        ),
-                        PortfolioItem(
-                            symbol="GOOGL",
-                            name="Alphabet Inc.",
-                            name_ko="알파벳",
-                            quantity=20,
-                            avg_price=145.50,
-                            current_price=162.30,
-                            total_value=3246.0,
-                            unrealized_pnl=336.0,
-                            unrealized_pnl_percent=11.5,
-                        ),
-                        PortfolioItem(
-                            symbol="TSLA",
-                            name="Tesla, Inc.",
-                            name_ko="테슬라",
-                            quantity=30,
-                            avg_price=185.75,
-                            current_price=198.45,
-                            total_value=5953.5,
-                            unrealized_pnl=381.0,
-                            unrealized_pnl_percent=6.8,
-                        ),
-                    ],
-                    created_at=datetime.utcnow().isoformat(),
-                    updated_at=datetime.utcnow().isoformat(),
+            # 실제 포트폴리오 상세 정보 조회
+            portfolio_detail = await portfolio_service.get_portfolio_detail(
+                UUID(portfolio_id), current_user_id
+            )
+            
+            if not portfolio_detail:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="포트폴리오를 찾을 수 없습니다."
                 )
 
-                log_info(
-                    "포트폴리오 상세 조회 성공",
-                    category="portfolio",
-                    context={
-                        "portfolio_id": portfolio_id,
-                        "total_value": portfolio.total_value,
-                        "positions_count": len(portfolio.positions),
-                    },
-                )
+            # 응답 데이터 구성
+            response_data = {
+                "portfolio": {
+                    "id": str(portfolio_detail.portfolio.id),
+                    "name": portfolio_detail.portfolio.name,
+                    "description": portfolio_detail.portfolio.description,
+                    "total_value": float(portfolio_detail.portfolio.total_value),
+                    "current_balance": float(portfolio_detail.portfolio.current_balance),
+                    "initial_balance": float(portfolio_detail.portfolio.initial_balance),
+                    "risk_level": portfolio_detail.portfolio.risk_level,
+                    "investment_goal": portfolio_detail.portfolio.investment_goal,
+                    "target_return": float(portfolio_detail.portfolio.target_return) if portfolio_detail.portfolio.target_return else None,
+                    "created_at": portfolio_detail.portfolio.created_at.isoformat(),
+                    "updated_at": portfolio_detail.portfolio.updated_at.isoformat(),
+                    "is_active": portfolio_detail.portfolio.is_active
+                },
+                "holdings": [
+                    {
+                        "id": str(holding.id),
+                        "symbol": holding.symbol,
+                        "quantity": holding.quantity,
+                        "average_cost": float(holding.average_cost),
+                        "current_price": float(holding.current_price) if holding.current_price else None,
+                        "market_value": float(holding.market_value) if holding.market_value else None,
+                        "unrealized_pnl": float(holding.unrealized_pnl) if holding.unrealized_pnl else None,
+                        "realized_pnl": float(holding.realized_pnl),
+                        "first_purchase_date": holding.first_purchase_date.isoformat(),
+                        "last_updated": holding.last_updated.isoformat()
+                    }
+                    for holding in portfolio_detail.holdings
+                ],
+                "recent_transactions": [
+                    {
+                        "id": str(tx.id),
+                        "symbol": tx.symbol,
+                        "transaction_type": tx.transaction_type,
+                        "quantity": tx.quantity,
+                        "price": float(tx.price),
+                        "fees": float(tx.fees),
+                        "total_amount": float(tx.total_amount),
+                        "executed_at": tx.executed_at.isoformat()
+                    }
+                    for tx in portfolio_detail.recent_transactions
+                ],
+                "settings": {
+                    "id": str(portfolio_detail.settings.id),
+                    "max_position_size": float(portfolio_detail.settings.max_position_size),
+                    "max_sector_exposure": float(portfolio_detail.settings.max_sector_exposure),
+                    "stop_loss_threshold": float(portfolio_detail.settings.stop_loss_threshold),
+                    "take_profit_threshold": float(portfolio_detail.settings.take_profit_threshold),
+                    "rebalancing_frequency": portfolio_detail.settings.rebalancing_frequency,
+                    "auto_rebalancing": portfolio_detail.settings.auto_rebalancing,
+                    "notifications_enabled": portfolio_detail.settings.notifications_enabled,
+                    "email_alerts": portfolio_detail.settings.email_alerts
+                } if portfolio_detail.settings else None,
+                "performance_summary": portfolio_detail.performance_summary
+            }
 
-                return JSONResponse(portfolio.dict())
-
-            # 포트폴리오를 찾을 수 없는 경우
-            log_warning(
-                "포트폴리오를 찾을 수 없음",
-                category=ErrorCategory.BUSINESS_LOGIC.value,
-                severity=ErrorSeverity.MEDIUM.value,
-                context={"portfolio_id": portfolio_id, "error": "portfolio_not_found"},
+            log_info(
+                f"포트폴리오 상세 조회 완료: {portfolio_detail.portfolio.name}",
+                category="portfolio",
+                context={
+                    "portfolio_id": portfolio_id,
+                    "holdings_count": len(portfolio_detail.holdings),
+                    "transactions_count": len(portfolio_detail.recent_transactions)
+                },
             )
 
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"포트폴리오 ID '{portfolio_id}'를 찾을 수 없습니다.",
-            )
+            return JSONResponse(response_data)
 
     except HTTPException:
-        # 이미 처리된 HTTPException은 그대로 재발생
         raise
     except Exception as e:
         log_error(
             "포트폴리오 상세 조회 실패",
             category=ErrorCategory.BUSINESS_LOGIC.value,
             severity=ErrorSeverity.HIGH.value,
-            context={
-                "portfolio_id": portfolio_id,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            },
+            context={"error": str(e), "error_type": type(e).__name__, "portfolio_id": portfolio_id},
         )
 
         capture_exception(
-            e,
-            {
-                "endpoint": "GET /portfolios/{portfolio_id}",
-                "portfolio_id": portfolio_id,
-                "operation": "get_portfolio_detail",
-            },
+            e, {"endpoint": "GET /portfolios/{portfolio_id}", "operation": "get_portfolio_detail", "portfolio_id": portfolio_id}
         )
 
         raise HTTPException(
@@ -260,229 +325,137 @@ async def get_portfolio_detail(portfolio_id: str):
         )
 
 
-@router.post("/{portfolio_id}/orders")
-async def place_order(portfolio_id: str, order: TradeOrder):
-    """주문 실행"""
+@router.put("/{portfolio_id}")
+async def update_portfolio(
+    portfolio_id: str,
+    update_data: PortfolioUpdate,
+    current_user_id: UUID = Depends(get_current_user_id)
+):
+    """포트폴리오 정보 업데이트"""
     log_api_call(
-        endpoint="POST /portfolios/{portfolio_id}/orders",
-        parameters={
-            "portfolio_id": portfolio_id,
-            "symbol": order.symbol,
-            "order_type": order.order_type,
-            "quantity": order.quantity,
-            "order_method": order.order_method,
-        },
+        endpoint="PUT /portfolios/{portfolio_id}",
+        parameters={"portfolio_id": portfolio_id, "user_id": str(current_user_id)}
     )
 
     try:
         with logging_system.performance_monitor.measure_operation(
-            "place_order"
+            "portfolio_update"
         ) as monitor:
             log_info(
-                "주문 실행 시작",
-                category="trading",
-                context={
-                    "portfolio_id": portfolio_id,
-                    "symbol": order.symbol,
-                    "order_type": order.order_type,
-                    "quantity": order.quantity,
-                    "order_method": order.order_method,
-                    "source": "portfolio_endpoint",
-                },
+                f"포트폴리오 업데이트 시작: {portfolio_id}",
+                category="portfolio",
+                context={"user_id": str(current_user_id)},
             )
 
-            # TODO: 실제 주문 실행 로직
-            # 포트폴리오 존재 확인
-            if portfolio_id not in ["portfolio_1", "portfolio_2"]:
-                log_warning(
-                    "포트폴리오를 찾을 수 없음",
-                    category=ErrorCategory.BUSINESS_LOGIC.value,
-                    severity=ErrorSeverity.MEDIUM.value,
-                    context={
-                        "portfolio_id": portfolio_id,
-                        "error": "portfolio_not_found",
-                    },
-                )
-
+            # 실제 포트폴리오 업데이트
+            updated_portfolio = await portfolio_service.update_portfolio(
+                UUID(portfolio_id), current_user_id, update_data
+            )
+            
+            if not updated_portfolio:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"포트폴리오 ID '{portfolio_id}'를 찾을 수 없습니다.",
+                    detail="포트폴리오를 찾을 수 없습니다."
                 )
 
-            # 주문 유효성 검사
-            if order.quantity <= 0:
-                log_warning(
-                    "유효하지 않은 주문 수량",
-                    category=ErrorCategory.VALIDATION.value,
-                    severity=ErrorSeverity.MEDIUM.value,
-                    context={
-                        "portfolio_id": portfolio_id,
-                        "symbol": order.symbol,
-                        "quantity": order.quantity,
-                        "error": "invalid_quantity",
-                    },
-                )
-
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="주문 수량은 0보다 커야 합니다.",
-                )
-
-            # 모의 주문 실행
-            executed_price = 175.84 if order.symbol == "AAPL" else 162.30
-            total_amount = order.quantity * executed_price
-
-            mock_order_response = {
-                "order_id": f"order_{datetime.utcnow().timestamp()}",
-                "portfolio_id": portfolio_id,
-                "symbol": order.symbol,
-                "order_type": order.order_type,
-                "quantity": order.quantity,
-                "order_method": order.order_method,
-                "status": "executed",
-                "executed_price": executed_price,
-                "executed_at": datetime.utcnow().isoformat(),
-                "commission": 0.0,  # 수수료 없음 (시뮬레이션)
-                "total_amount": total_amount,
+            response_data = {
+                "id": str(updated_portfolio.id),
+                "name": updated_portfolio.name,
+                "description": updated_portfolio.description,
+                "total_value": float(updated_portfolio.total_value),
+                "current_balance": float(updated_portfolio.current_balance),
+                "initial_balance": float(updated_portfolio.initial_balance),
+                "risk_level": updated_portfolio.risk_level,
+                "investment_goal": updated_portfolio.investment_goal,
+                "target_return": float(updated_portfolio.target_return) if updated_portfolio.target_return else None,
+                "created_at": updated_portfolio.created_at.isoformat(),
+                "updated_at": updated_portfolio.updated_at.isoformat(),
+                "is_active": updated_portfolio.is_active
             }
 
             log_info(
-                "주문 실행 성공",
-                category="trading",
-                context={
-                    "portfolio_id": portfolio_id,
-                    "order_id": mock_order_response["order_id"],
-                    "symbol": order.symbol,
-                    "order_type": order.order_type,
-                    "quantity": order.quantity,
-                    "executed_price": executed_price,
-                    "total_amount": total_amount,
-                },
+                f"포트폴리오 업데이트 완료: {updated_portfolio.name}",
+                category="portfolio",
+                context={"portfolio_id": portfolio_id},
             )
 
-            return JSONResponse(
-                mock_order_response, status_code=status.HTTP_201_CREATED
-            )
+            return JSONResponse(response_data)
 
     except HTTPException:
-        # 이미 처리된 HTTPException은 그대로 재발생
         raise
     except Exception as e:
         log_error(
-            "주문 실행 실패",
+            "포트폴리오 업데이트 실패",
             category=ErrorCategory.BUSINESS_LOGIC.value,
             severity=ErrorSeverity.HIGH.value,
-            context={
-                "portfolio_id": portfolio_id,
-                "symbol": order.symbol,
-                "order_type": order.order_type,
-                "quantity": order.quantity,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            },
+            context={"error": str(e), "error_type": type(e).__name__, "portfolio_id": portfolio_id},
         )
 
         capture_exception(
-            e,
-            {
-                "endpoint": "POST /portfolios/{portfolio_id}/orders",
-                "portfolio_id": portfolio_id,
-                "symbol": order.symbol,
-                "operation": "place_order",
-            },
+            e, {"endpoint": "PUT /portfolios/{portfolio_id}", "operation": "update_portfolio", "portfolio_id": portfolio_id}
         )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="주문 실행 중 오류가 발생했습니다.",
+            detail="포트폴리오 업데이트 중 오류가 발생했습니다.",
         )
 
 
-@router.get("/{portfolio_id}/performance")
-async def get_portfolio_performance(portfolio_id: str):
-    """포트폴리오 성과 분석"""
+@router.delete("/{portfolio_id}")
+async def delete_portfolio(
+    portfolio_id: str,
+    current_user_id: UUID = Depends(get_current_user_id)
+):
+    """포트폴리오 삭제"""
     log_api_call(
-        endpoint="GET /portfolios/{portfolio_id}/performance",
-        parameters={"portfolio_id": portfolio_id},
+        endpoint="DELETE /portfolios/{portfolio_id}",
+        parameters={"portfolio_id": portfolio_id, "user_id": str(current_user_id)}
     )
 
     try:
         with logging_system.performance_monitor.measure_operation(
-            "portfolio_performance"
+            "portfolio_delete"
         ) as monitor:
             log_info(
-                "포트폴리오 성과 분석 시작",
-                category="analytics",
-                context={"portfolio_id": portfolio_id, "source": "portfolio_endpoint"},
+                f"포트폴리오 삭제 시작: {portfolio_id}",
+                category="portfolio",
+                context={"user_id": str(current_user_id)},
             )
 
-            # TODO: 실제 성과 계산 로직
-            performance_data = {
-                "portfolio_id": portfolio_id,
-                "performance_metrics": {
-                    "total_return": 12.5,
-                    "annualized_return": 15.2,
-                    "volatility": 18.7,
-                    "sharpe_ratio": 0.81,
-                    "max_drawdown": -8.3,
-                    "beta": 1.12,
-                    "alpha": 2.4,
-                },
-                "monthly_returns": [
-                    {"month": "2024-01", "return": 3.2},
-                    {"month": "2024-02", "return": -1.8},
-                    {"month": "2024-03", "return": 5.7},
-                    {"month": "2024-04", "return": 2.1},
-                    {"month": "2024-05", "return": 4.3},
-                    {"month": "2024-06", "return": 1.8},
-                ],
-                "sector_allocation": {
-                    "Technology": 65.2,
-                    "Healthcare": 15.3,
-                    "Financial": 10.8,
-                    "Consumer": 8.7,
-                },
-                "updated_at": datetime.utcnow().isoformat(),
-            }
+            # 실제 포트폴리오 삭제 (소프트 삭제)
+            success = await portfolio_service.delete_portfolio(
+                UUID(portfolio_id), current_user_id
+            )
+            
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="포트폴리오를 찾을 수 없습니다."
+                )
 
-            # 성과 지표 로깅
-            metrics = performance_data["performance_metrics"]
             log_info(
-                "포트폴리오 성과 분석 완료",
-                category="analytics",
-                context={
-                    "portfolio_id": portfolio_id,
-                    "total_return": metrics["total_return"],
-                    "annualized_return": metrics["annualized_return"],
-                    "sharpe_ratio": metrics["sharpe_ratio"],
-                    "volatility": metrics["volatility"],
-                },
+                f"포트폴리오 삭제 완료: {portfolio_id}",
+                category="portfolio",
+                context={"portfolio_id": portfolio_id},
             )
 
-            return JSONResponse(performance_data)
+            return JSONResponse({"message": "포트폴리오가 성공적으로 삭제되었습니다."})
 
+    except HTTPException:
+        raise
     except Exception as e:
         log_error(
-            "포트폴리오 성과 분석 실패",
+            "포트폴리오 삭제 실패",
             category=ErrorCategory.BUSINESS_LOGIC.value,
             severity=ErrorSeverity.HIGH.value,
-            context={
-                "portfolio_id": portfolio_id,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            },
+            context={"error": str(e), "error_type": type(e).__name__, "portfolio_id": portfolio_id},
         )
 
         capture_exception(
-            e,
-            {
-                "endpoint": "GET /portfolios/{portfolio_id}/performance",
-                "portfolio_id": portfolio_id,
-                "operation": "get_portfolio_performance",
-            },
+            e, {"endpoint": "DELETE /portfolios/{portfolio_id}", "operation": "delete_portfolio", "portfolio_id": portfolio_id}
         )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="포트폴리오 성과 분석 중 오류가 발생했습니다.",
+            detail="포트폴리오 삭제 중 오류가 발생했습니다.",
         )
