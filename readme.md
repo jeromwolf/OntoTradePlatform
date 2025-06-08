@@ -1,6 +1,16 @@
-# OntoTradePlatform 🚀
+# 🚀 OntoTradePlatform
 
 > 온톨로지 기반 지식 그래프를 활용한 지능형 투자 시뮬레이션 플랫폼
+
+[![Last Updated](https://img.shields.io/badge/Last%20Updated-2025.06.08-blue)](https://github.com/jeromwolf/OntoTradePlatform)
+[![Frontend](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript-61dafb)](https://react.dev)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%2B%20Python%203.11-009688)](https://fastapi.tiangolo.com)
+[![Status](https://img.shields.io/badge/Status-Active%20Development-green)](https://github.com/jeromwolf/OntoTradePlatform)
+
+## 📈 최신 업데이트 (2025.06.08)
+- **SimulationPage 스타일링 완료**: Tailwind CSS 클래스 문제 해결 및 다크 테마 일치
+- **인라인 스타일 적용**: DashboardPage와 동일한 스타일링 방식으로 통일
+- **UI 일관성 개선**: 모든 페이지 간 톤앤매너 통일 및 렌더링 오류 해결
 
 OntoTradePlatform은 **온톨로지 기반 지식 그래프**와 **실시간 주식 시장 데이터**를 결합하여 **데이터 기반 투자 결정**을 지원하는 차세대 투자 시뮬레이션 플랫폼입니다.
 
@@ -36,7 +46,7 @@ OntoTradePlatform은 **온톨로지 기반 지식 그래프**와 **실시간 주
 
 #### 🏗️ Task 1: 프로젝트 인프라 설정 (100% 완료)
 - React 18 + Vite + TypeScript 프론트엔드 구축
-- FastAPI + Python 3.11 백엔드 구축  
+- FastAPI + Python 3.11 백엔드 구축
 - GitHub Actions CI/CD 파이프라인
 - Vercel 프론트엔드 배포, Railway 백엔드 배포
 - Sentry 모니터링, PostHog 분석 도구 통합
@@ -97,6 +107,14 @@ OntoTradePlatform은 **온톨로지 기반 지식 그래프**와 **실시간 주
 - **차트 영역**: 선택된 종목의 실시간 가격 차트 (플레이스홀더)
 - **거래 패널**: 매수/매도 주문 입력 및 호가창 표시
 - **WebSocket 연동**: 실시간 데이터 수신 및 자동 업데이트
+
+### 🎮 투자 시뮬레이션 페이지 (`/simulation`)
+- **시뮬레이션 현황**: 현재 진행률, 총 수익률, 투자 기간 표시
+- **포트폴리오 분석**: 보유 종목별 성과, 수익률, 리스크 메트릭
+- **프로그레스 트래킹**: 시뮬레이션 목표 달성률 및 다음 단계 안내
+- **실시간 리더보드**: 경쟁자 순위, 레벨별 비교, 개인 랭킹 시스템
+- **다크 테마**: DashboardPage와 일치하는 인라인 스타일 적용
+- **양방향 언어 지원**: 한국어/영어 토글 인터페이스
 
 ### 🔌 실시간 데이터 모니터링 (`/websocket-test`)
 - **연결 상태**: WebSocket 연결 상태 실시간 모니터링
