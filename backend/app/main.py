@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.monitoring import init_sentry
-from app.core.websocket_simple import ws_router, get_websocket_stats
+from app.core.websocket_simple import get_websocket_stats, ws_router
 
 
 def create_app() -> FastAPI:
@@ -62,14 +62,16 @@ app = create_app()
 @app.get("/")
 async def root():
     """루트 엔드포인트를 제공합니다."""
-    return JSONResponse({
-        "message": "OntoTrade API에 오신 것을 환영합니다! ",
-        "status": "healthy",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "description": "온톨로지 기반 투자 시뮬레이션 플랫폼",
-        "websocket": "/ws"
-    })
+    return JSONResponse(
+        {
+            "message": "OntoTrade API에 오신 것을 환영합니다! ",
+            "status": "healthy",
+            "version": "1.0.0",
+            "docs": "/docs",
+            "description": "온톨로지 기반 투자 시뮬레이션 플랫폼",
+            "websocket": "/ws",
+        }
+    )
 
 
 @app.get("/health")
@@ -82,10 +84,7 @@ async def health_check():
 async def websocket_stats():
     """WebSocket 연결 통계를 제공합니다."""
     stats = get_websocket_stats()
-    return JSONResponse({
-        "status": "success",
-        "data": stats
-    })
+    return JSONResponse({"status": "success", "data": stats})
 
 
 # Socket.IO를 FastAPI와 통합

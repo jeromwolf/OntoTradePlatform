@@ -20,7 +20,7 @@ export interface DataQualitySummary {
 export interface AnomalyAlert {
   symbol: string;
   type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   message: string;
   detected_at: string;
   current_value: number;

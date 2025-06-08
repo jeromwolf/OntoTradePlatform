@@ -13,8 +13,14 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.core.logging_system import (
-    log_info, log_warning, log_error, log_critical, log_api_call,
-    ErrorCategory, ErrorSeverity, logging_system
+    ErrorCategory,
+    ErrorSeverity,
+    log_api_call,
+    log_critical,
+    log_error,
+    log_info,
+    log_warning,
+    logging_system,
 )
 from app.core.monitoring import capture_exception, capture_message
 
@@ -59,13 +65,17 @@ class TradeOrder(BaseModel):
 async def get_portfolios():
     """사용자의 포트폴리오 목록 조회"""
     log_api_call(endpoint="GET /portfolios/", parameters={})
-    
+
     try:
-        with logging_system.performance_monitor.measure_operation("portfolio_list") as monitor:
-            log_info("포트폴리오 목록 조회 시작", category="portfolio", context={
-                "source": "portfolio_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "portfolio_list"
+        ) as monitor:
+            log_info(
+                "포트폴리오 목록 조회 시작",
+                category="portfolio",
+                context={"source": "portfolio_endpoint"},
+            )
+
             # TODO: 실제 데이터베이스에서 포트폴리오 조회
             mock_portfolios = [
                 {
@@ -93,53 +103,59 @@ async def get_portfolios():
                     "updated_at": datetime.utcnow().isoformat(),
                 },
             ]
-            
+
             response_data = {
                 "portfolios": mock_portfolios,
                 "total_portfolios": len(mock_portfolios),
             }
-            
-            log_info("포트폴리오 목록 조회 완료", category="portfolio", context={
-                "total_portfolios": len(mock_portfolios),
-                "total_value": sum(p["total_value"] for p in mock_portfolios)
-            })
-            
+
+            log_info(
+                "포트폴리오 목록 조회 완료",
+                category="portfolio",
+                context={
+                    "total_portfolios": len(mock_portfolios),
+                    "total_value": sum(p["total_value"] for p in mock_portfolios),
+                },
+            )
+
             return JSONResponse(response_data)
-            
+
     except Exception as e:
-        log_error("포트폴리오 목록 조회 실패", 
-                 category=ErrorCategory.BUSINESS_LOGIC.value, 
-                 severity=ErrorSeverity.HIGH.value,
-                 context={
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "GET /portfolios/",
-            "operation": "get_portfolios"
-        })
-        
+        log_error(
+            "포트폴리오 목록 조회 실패",
+            category=ErrorCategory.BUSINESS_LOGIC.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={"error": str(e), "error_type": type(e).__name__},
+        )
+
+        capture_exception(
+            e, {"endpoint": "GET /portfolios/", "operation": "get_portfolios"}
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="포트폴리오 조회 중 오류가 발생했습니다."
+            detail="포트폴리오 조회 중 오류가 발생했습니다.",
         )
 
 
 @router.get("/{portfolio_id}")
 async def get_portfolio_detail(portfolio_id: str):
     """포트폴리오 상세 정보 조회"""
-    log_api_call(endpoint="GET /portfolios/{portfolio_id}", parameters={
-        "portfolio_id": portfolio_id
-    })
-    
+    log_api_call(
+        endpoint="GET /portfolios/{portfolio_id}",
+        parameters={"portfolio_id": portfolio_id},
+    )
+
     try:
-        with logging_system.performance_monitor.measure_operation("portfolio_detail") as monitor:
-            log_info("포트폴리오 상세 조회 시작", category="portfolio", context={
-                "portfolio_id": portfolio_id,
-                "source": "portfolio_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "portfolio_detail"
+        ) as monitor:
+            log_info(
+                "포트폴리오 상세 조회 시작",
+                category="portfolio",
+                context={"portfolio_id": portfolio_id, "source": "portfolio_endpoint"},
+            )
+
             # TODO: 실제 포트폴리오 데이터 조회
             if portfolio_id == "portfolio_1":
                 portfolio = Portfolio(
@@ -188,87 +204,106 @@ async def get_portfolio_detail(portfolio_id: str):
                     created_at=datetime.utcnow().isoformat(),
                     updated_at=datetime.utcnow().isoformat(),
                 )
-                
-                log_info("포트폴리오 상세 조회 성공", category="portfolio", context={
-                    "portfolio_id": portfolio_id,
-                    "total_value": portfolio.total_value,
-                    "positions_count": len(portfolio.positions)
-                })
-                
+
+                log_info(
+                    "포트폴리오 상세 조회 성공",
+                    category="portfolio",
+                    context={
+                        "portfolio_id": portfolio_id,
+                        "total_value": portfolio.total_value,
+                        "positions_count": len(portfolio.positions),
+                    },
+                )
+
                 return JSONResponse(portfolio.dict())
-            
+
             # 포트폴리오를 찾을 수 없는 경우
-            log_warning("포트폴리오를 찾을 수 없음", 
-                       category=ErrorCategory.BUSINESS_LOGIC.value, 
-                       severity=ErrorSeverity.MEDIUM.value,
-                       context={
-                           "portfolio_id": portfolio_id,
-                           "error": "portfolio_not_found"
-                       })
-            
+            log_warning(
+                "포트폴리오를 찾을 수 없음",
+                category=ErrorCategory.BUSINESS_LOGIC.value,
+                severity=ErrorSeverity.MEDIUM.value,
+                context={"portfolio_id": portfolio_id, "error": "portfolio_not_found"},
+            )
+
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"포트폴리오 ID '{portfolio_id}'를 찾을 수 없습니다.",
             )
-            
+
     except HTTPException:
         # 이미 처리된 HTTPException은 그대로 재발생
         raise
     except Exception as e:
-        log_error("포트폴리오 상세 조회 실패", 
-                 category=ErrorCategory.BUSINESS_LOGIC.value, 
-                 severity=ErrorSeverity.HIGH.value,
-                 context={
-                     "portfolio_id": portfolio_id,
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "GET /portfolios/{portfolio_id}",
-            "portfolio_id": portfolio_id,
-            "operation": "get_portfolio_detail"
-        })
-        
+        log_error(
+            "포트폴리오 상세 조회 실패",
+            category=ErrorCategory.BUSINESS_LOGIC.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={
+                "portfolio_id": portfolio_id,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            },
+        )
+
+        capture_exception(
+            e,
+            {
+                "endpoint": "GET /portfolios/{portfolio_id}",
+                "portfolio_id": portfolio_id,
+                "operation": "get_portfolio_detail",
+            },
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="포트폴리오 상세 조회 중 오류가 발생했습니다."
+            detail="포트폴리오 상세 조회 중 오류가 발생했습니다.",
         )
 
 
 @router.post("/{portfolio_id}/orders")
 async def place_order(portfolio_id: str, order: TradeOrder):
     """주문 실행"""
-    log_api_call(endpoint="POST /portfolios/{portfolio_id}/orders", parameters={
-        "portfolio_id": portfolio_id,
-        "symbol": order.symbol,
-        "order_type": order.order_type,
-        "quantity": order.quantity,
-        "order_method": order.order_method
-    })
-    
+    log_api_call(
+        endpoint="POST /portfolios/{portfolio_id}/orders",
+        parameters={
+            "portfolio_id": portfolio_id,
+            "symbol": order.symbol,
+            "order_type": order.order_type,
+            "quantity": order.quantity,
+            "order_method": order.order_method,
+        },
+    )
+
     try:
-        with logging_system.performance_monitor.measure_operation("place_order") as monitor:
-            log_info("주문 실행 시작", category="trading", context={
-                "portfolio_id": portfolio_id,
-                "symbol": order.symbol,
-                "order_type": order.order_type,
-                "quantity": order.quantity,
-                "order_method": order.order_method,
-                "source": "portfolio_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "place_order"
+        ) as monitor:
+            log_info(
+                "주문 실행 시작",
+                category="trading",
+                context={
+                    "portfolio_id": portfolio_id,
+                    "symbol": order.symbol,
+                    "order_type": order.order_type,
+                    "quantity": order.quantity,
+                    "order_method": order.order_method,
+                    "source": "portfolio_endpoint",
+                },
+            )
+
             # TODO: 실제 주문 실행 로직
             # 포트폴리오 존재 확인
             if portfolio_id not in ["portfolio_1", "portfolio_2"]:
-                log_warning("포트폴리오를 찾을 수 없음", 
-                           category=ErrorCategory.BUSINESS_LOGIC.value, 
-                           severity=ErrorSeverity.MEDIUM.value,
-                           context={
-                               "portfolio_id": portfolio_id,
-                               "error": "portfolio_not_found"
-                           })
-                
+                log_warning(
+                    "포트폴리오를 찾을 수 없음",
+                    category=ErrorCategory.BUSINESS_LOGIC.value,
+                    severity=ErrorSeverity.MEDIUM.value,
+                    context={
+                        "portfolio_id": portfolio_id,
+                        "error": "portfolio_not_found",
+                    },
+                )
+
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"포트폴리오 ID '{portfolio_id}'를 찾을 수 없습니다.",
@@ -276,16 +311,18 @@ async def place_order(portfolio_id: str, order: TradeOrder):
 
             # 주문 유효성 검사
             if order.quantity <= 0:
-                log_warning("유효하지 않은 주문 수량", 
-                           category=ErrorCategory.VALIDATION.value, 
-                           severity=ErrorSeverity.MEDIUM.value,
-                           context={
-                               "portfolio_id": portfolio_id,
-                               "symbol": order.symbol,
-                               "quantity": order.quantity,
-                               "error": "invalid_quantity"
-                           })
-                
+                log_warning(
+                    "유효하지 않은 주문 수량",
+                    category=ErrorCategory.VALIDATION.value,
+                    severity=ErrorSeverity.MEDIUM.value,
+                    context={
+                        "portfolio_id": portfolio_id,
+                        "symbol": order.symbol,
+                        "quantity": order.quantity,
+                        "error": "invalid_quantity",
+                    },
+                )
+
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="주문 수량은 0보다 커야 합니다.",
@@ -294,7 +331,7 @@ async def place_order(portfolio_id: str, order: TradeOrder):
             # 모의 주문 실행
             executed_price = 175.84 if order.symbol == "AAPL" else 162.30
             total_amount = order.quantity * executed_price
-            
+
             mock_order_response = {
                 "order_id": f"order_{datetime.utcnow().timestamp()}",
                 "portfolio_id": portfolio_id,
@@ -308,62 +345,77 @@ async def place_order(portfolio_id: str, order: TradeOrder):
                 "commission": 0.0,  # 수수료 없음 (시뮬레이션)
                 "total_amount": total_amount,
             }
-            
-            log_info("주문 실행 성공", category="trading", context={
-                "portfolio_id": portfolio_id,
-                "order_id": mock_order_response["order_id"],
-                "symbol": order.symbol,
-                "order_type": order.order_type,
-                "quantity": order.quantity,
-                "executed_price": executed_price,
-                "total_amount": total_amount
-            })
 
-            return JSONResponse(mock_order_response, status_code=status.HTTP_201_CREATED)
-            
+            log_info(
+                "주문 실행 성공",
+                category="trading",
+                context={
+                    "portfolio_id": portfolio_id,
+                    "order_id": mock_order_response["order_id"],
+                    "symbol": order.symbol,
+                    "order_type": order.order_type,
+                    "quantity": order.quantity,
+                    "executed_price": executed_price,
+                    "total_amount": total_amount,
+                },
+            )
+
+            return JSONResponse(
+                mock_order_response, status_code=status.HTTP_201_CREATED
+            )
+
     except HTTPException:
         # 이미 처리된 HTTPException은 그대로 재발생
         raise
     except Exception as e:
-        log_error("주문 실행 실패", 
-                 category=ErrorCategory.BUSINESS_LOGIC.value, 
-                 severity=ErrorSeverity.HIGH.value,
-                 context={
-                     "portfolio_id": portfolio_id,
-                     "symbol": order.symbol,
-                     "order_type": order.order_type,
-                     "quantity": order.quantity,
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "POST /portfolios/{portfolio_id}/orders",
-            "portfolio_id": portfolio_id,
-            "symbol": order.symbol,
-            "operation": "place_order"
-        })
-        
+        log_error(
+            "주문 실행 실패",
+            category=ErrorCategory.BUSINESS_LOGIC.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={
+                "portfolio_id": portfolio_id,
+                "symbol": order.symbol,
+                "order_type": order.order_type,
+                "quantity": order.quantity,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            },
+        )
+
+        capture_exception(
+            e,
+            {
+                "endpoint": "POST /portfolios/{portfolio_id}/orders",
+                "portfolio_id": portfolio_id,
+                "symbol": order.symbol,
+                "operation": "place_order",
+            },
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="주문 실행 중 오류가 발생했습니다."
+            detail="주문 실행 중 오류가 발생했습니다.",
         )
 
 
 @router.get("/{portfolio_id}/performance")
 async def get_portfolio_performance(portfolio_id: str):
     """포트폴리오 성과 분석"""
-    log_api_call(endpoint="GET /portfolios/{portfolio_id}/performance", parameters={
-        "portfolio_id": portfolio_id
-    })
-    
+    log_api_call(
+        endpoint="GET /portfolios/{portfolio_id}/performance",
+        parameters={"portfolio_id": portfolio_id},
+    )
+
     try:
-        with logging_system.performance_monitor.measure_operation("portfolio_performance") as monitor:
-            log_info("포트폴리오 성과 분석 시작", category="analytics", context={
-                "portfolio_id": portfolio_id,
-                "source": "portfolio_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "portfolio_performance"
+        ) as monitor:
+            log_info(
+                "포트폴리오 성과 분석 시작",
+                category="analytics",
+                context={"portfolio_id": portfolio_id, "source": "portfolio_endpoint"},
+            )
+
             # TODO: 실제 성과 계산 로직
             performance_data = {
                 "portfolio_id": portfolio_id,
@@ -392,36 +444,45 @@ async def get_portfolio_performance(portfolio_id: str):
                 },
                 "updated_at": datetime.utcnow().isoformat(),
             }
-            
+
             # 성과 지표 로깅
             metrics = performance_data["performance_metrics"]
-            log_info("포트폴리오 성과 분석 완료", category="analytics", context={
-                "portfolio_id": portfolio_id,
-                "total_return": metrics["total_return"],
-                "annualized_return": metrics["annualized_return"],
-                "sharpe_ratio": metrics["sharpe_ratio"],
-                "volatility": metrics["volatility"]
-            })
+            log_info(
+                "포트폴리오 성과 분석 완료",
+                category="analytics",
+                context={
+                    "portfolio_id": portfolio_id,
+                    "total_return": metrics["total_return"],
+                    "annualized_return": metrics["annualized_return"],
+                    "sharpe_ratio": metrics["sharpe_ratio"],
+                    "volatility": metrics["volatility"],
+                },
+            )
 
             return JSONResponse(performance_data)
-            
+
     except Exception as e:
-        log_error("포트폴리오 성과 분석 실패", 
-                 category=ErrorCategory.BUSINESS_LOGIC.value, 
-                 severity=ErrorSeverity.HIGH.value,
-                 context={
-                     "portfolio_id": portfolio_id,
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "GET /portfolios/{portfolio_id}/performance",
-            "portfolio_id": portfolio_id,
-            "operation": "get_portfolio_performance"
-        })
-        
+        log_error(
+            "포트폴리오 성과 분석 실패",
+            category=ErrorCategory.BUSINESS_LOGIC.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={
+                "portfolio_id": portfolio_id,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            },
+        )
+
+        capture_exception(
+            e,
+            {
+                "endpoint": "GET /portfolios/{portfolio_id}/performance",
+                "portfolio_id": portfolio_id,
+                "operation": "get_portfolio_performance",
+            },
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="포트폴리오 성과 분석 중 오류가 발생했습니다."
+            detail="포트폴리오 성과 분석 중 오류가 발생했습니다.",
         )

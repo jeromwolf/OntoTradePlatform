@@ -1,9 +1,9 @@
 /**
  * WebSocket 연결 상태 타입
  */
-import { ConnectionStatus } from '../services/websocket';
-export type { StockQuote } from '../services/websocket';
-export { ConnectionStatus } from '../services/websocket';
+import { ConnectionStatus } from "../services/websocket";
+export type { StockQuote } from "../services/websocket";
+export { ConnectionStatus } from "../services/websocket";
 
 /**
  * WebSocket 메시지 타입

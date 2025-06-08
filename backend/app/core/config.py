@@ -26,7 +26,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",  # localhost 대신 127.0.0.1
         "https://ontotrade.vercel.app",  # 프로덕션 프론트엔드
         "https://www.ontotrade.com",  # 커스텀 도메인 (미래)
-        "*"  # 개발 중 모든 오리진 허용
+        "*",  # 개발 중 모든 오리진 허용
     ]
 
     # 데이터베이스 설정

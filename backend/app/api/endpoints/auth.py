@@ -12,11 +12,16 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 
 from app.core.logging_system import (
-    log_info, log_warning, log_error, log_critical, log_api_call,
-    ErrorCategory, ErrorSeverity, logging_system
+    ErrorCategory,
+    ErrorSeverity,
+    log_api_call,
+    log_critical,
+    log_error,
+    log_info,
+    log_warning,
+    logging_system,
 )
 from app.core.monitoring import capture_exception, capture_message
-
 
 router = APIRouter()
 
@@ -57,72 +62,94 @@ async def login(credentials: UserLogin):
     """사용자 로그인."""
     log_api_call(
         endpoint="POST /auth/login",
-        parameters={"email": credentials.email, "has_password": bool(credentials.password)}
+        parameters={
+            "email": credentials.email,
+            "has_password": bool(credentials.password),
+        },
     )
-    
+
     try:
         # 성능 측정 시작
-        with logging_system.performance_monitor.measure_operation("auth_login") as monitor:
-            log_info("사용자 로그인 시도", category="authentication", context={
-                "email": credentials.email,
-                "source": "auth_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "auth_login"
+        ) as monitor:
+            log_info(
+                "사용자 로그인 시도",
+                category="authentication",
+                context={"email": credentials.email, "source": "auth_endpoint"},
+            )
+
             # TODO: 실제 인증 로직 구현 (Supabase 연동)
-            
+
             # 임시 모의 응답
-            if credentials.email == TEST_EMAIL and credentials.password == TEST_PASSWORD:
+            if (
+                credentials.email == TEST_EMAIL
+                and credentials.password == TEST_PASSWORD
+            ):
                 token_response = Token(
                     access_token=MOCK_ACCESS_TOKEN,
                     refresh_token=MOCK_REFRESH_TOKEN,
                     expires_in=1800,  # 30분
                 )
-                
-                log_info("사용자 로그인 성공", category="authentication", context={
-                    "email": credentials.email,
-                    "expires_in": 1800,
-                    "token_type": "bearer"
-                })
-                
+
+                log_info(
+                    "사용자 로그인 성공",
+                    category="authentication",
+                    context={
+                        "email": credentials.email,
+                        "expires_in": 1800,
+                        "token_type": "bearer",
+                    },
+                )
+
                 return token_response
-            
+
             # 인증 실패
-            log_warning("사용자 로그인 실패", category="authentication", context={
-                "email": credentials.email,
-                "reason": "invalid_credentials",
-                "severity": ErrorSeverity.MEDIUM.value
-            })
-            
+            log_warning(
+                "사용자 로그인 실패",
+                category="authentication",
+                context={
+                    "email": credentials.email,
+                    "reason": "invalid_credentials",
+                    "severity": ErrorSeverity.MEDIUM.value,
+                },
+            )
+
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="이메일 또는 비밀번호가 올바르지 않습니다.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-            
+
     except HTTPException:
         # 알려진 인증 실패는 다시 발생시킴
         raise
     except Exception as e:
         # 예상치 못한 오류 처리
-        log_error("로그인 과정 중 예상치 못한 오류", 
-                 category=ErrorCategory.AUTHENTICATION.value, 
-                 severity=ErrorSeverity.HIGH.value,
-                 context={
-                     "email": credentials.email,
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
+        log_error(
+            "로그인 과정 중 예상치 못한 오류",
+            category=ErrorCategory.AUTHENTICATION.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={
+                "email": credentials.email,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            },
+        )
+
         # Sentry에 예외 정보 전송
-        capture_exception(e, {
-            "endpoint": "POST /auth/login",
-            "email": credentials.email,
-            "operation": "user_login"
-        })
-        
+        capture_exception(
+            e,
+            {
+                "endpoint": "POST /auth/login",
+                "email": credentials.email,
+                "operation": "user_login",
+            },
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            detail="로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
         )
 
 
@@ -135,36 +162,44 @@ async def register(user_data: UserRegister):
             "email": user_data.email,
             "username": user_data.username,
             "has_password": bool(user_data.password),
-            "has_confirm_password": bool(user_data.confirm_password)
-        }
+            "has_confirm_password": bool(user_data.confirm_password),
+        },
     )
-    
+
     try:
-        with logging_system.performance_monitor.measure_operation("auth_register") as monitor:
-            log_info("사용자 회원가입 시도", category="authentication", context={
-                "email": user_data.email,
-                "username": user_data.username,
-                "source": "auth_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "auth_register"
+        ) as monitor:
+            log_info(
+                "사용자 회원가입 시도",
+                category="authentication",
+                context={
+                    "email": user_data.email,
+                    "username": user_data.username,
+                    "source": "auth_endpoint",
+                },
+            )
+
             # TODO: 실제 회원가입 로직 구현
-            
+
             # 비밀번호 확인
             if user_data.password != user_data.confirm_password:
-                log_warning("회원가입 실패 - 비밀번호 불일치", 
-                           category="authentication", 
-                           context={
-                               "email": user_data.email,
-                               "username": user_data.username,
-                               "reason": "password_mismatch",
-                               "severity": ErrorSeverity.LOW.value
-                           })
-                
+                log_warning(
+                    "회원가입 실패 - 비밀번호 불일치",
+                    category="authentication",
+                    context={
+                        "email": user_data.email,
+                        "username": user_data.username,
+                        "reason": "password_mismatch",
+                        "severity": ErrorSeverity.LOW.value,
+                    },
+                )
+
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="비밀번호가 일치하지 않습니다.",
                 )
-            
+
             # 임시 모의 응답
             response_data = {
                 "message": "회원가입이 성공적으로 완료되었습니다.",
@@ -174,41 +209,50 @@ async def register(user_data: UserRegister):
                     "created_at": datetime.utcnow().isoformat(),
                 },
             }
-            
-            log_info("사용자 회원가입 성공", category="authentication", context={
-                "email": user_data.email,
-                "username": user_data.username,
-                "created_at": response_data["user"]["created_at"]
-            })
-            
+
+            log_info(
+                "사용자 회원가입 성공",
+                category="authentication",
+                context={
+                    "email": user_data.email,
+                    "username": user_data.username,
+                    "created_at": response_data["user"]["created_at"],
+                },
+            )
+
             return JSONResponse(response_data, status_code=status.HTTP_201_CREATED)
-            
+
     except HTTPException:
         # 알려진 검증 오류는 다시 발생시킴
         raise
     except Exception as e:
         # 예상치 못한 오류 처리
-        log_error("회원가입 과정 중 예상치 못한 오류", 
-                 category=ErrorCategory.AUTHENTICATION.value, 
-                 severity=ErrorSeverity.HIGH.value,
-                 context={
-                     "email": user_data.email,
-                     "username": user_data.username,
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
+        log_error(
+            "회원가입 과정 중 예상치 못한 오류",
+            category=ErrorCategory.AUTHENTICATION.value,
+            severity=ErrorSeverity.HIGH.value,
+            context={
+                "email": user_data.email,
+                "username": user_data.username,
+                "error": str(e),
+                "error_type": type(e).__name__,
+            },
+        )
+
         # Sentry에 예외 정보 전송
-        capture_exception(e, {
-            "endpoint": "POST /auth/register",
-            "email": user_data.email,
-            "username": user_data.username,
-            "operation": "user_registration"
-        })
-        
+        capture_exception(
+            e,
+            {
+                "endpoint": "POST /auth/register",
+                "email": user_data.email,
+                "username": user_data.username,
+                "operation": "user_registration",
+            },
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            detail="회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
         )
 
 
@@ -216,39 +260,46 @@ async def register(user_data: UserRegister):
 async def refresh_token():
     """토큰 갱신."""
     log_api_call(endpoint="POST /auth/refresh", parameters={})
-    
+
     try:
-        with logging_system.performance_monitor.measure_operation("auth_token_refresh") as monitor:
-            log_info("토큰 갱신 요청", category="authentication", context={
-                "source": "auth_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "auth_token_refresh"
+        ) as monitor:
+            log_info(
+                "토큰 갱신 요청",
+                category="authentication",
+                context={"source": "auth_endpoint"},
+            )
+
             # TODO: 실제 토큰 갱신 로직 구현
-            response_data = {"access_token": "new_mock_access_token", "expires_in": 1800}
-            
-            log_info("토큰 갱신 성공", category="authentication", context={
-                "expires_in": response_data["expires_in"]
-            })
-            
+            response_data = {
+                "access_token": "new_mock_access_token",
+                "expires_in": 1800,
+            }
+
+            log_info(
+                "토큰 갱신 성공",
+                category="authentication",
+                context={"expires_in": response_data["expires_in"]},
+            )
+
             return JSONResponse(response_data)
-            
+
     except Exception as e:
-        log_error("토큰 갱신 중 오류", 
-                 category=ErrorCategory.AUTHENTICATION.value, 
-                 severity=ErrorSeverity.MEDIUM.value,
-                 context={
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "POST /auth/refresh",
-            "operation": "token_refresh"
-        })
-        
+        log_error(
+            "토큰 갱신 중 오류",
+            category=ErrorCategory.AUTHENTICATION.value,
+            severity=ErrorSeverity.MEDIUM.value,
+            context={"error": str(e), "error_type": type(e).__name__},
+        )
+
+        capture_exception(
+            e, {"endpoint": "POST /auth/refresh", "operation": "token_refresh"}
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="토큰 갱신 중 오류가 발생했습니다."
+            detail="토큰 갱신 중 오류가 발생했습니다.",
         )
 
 
@@ -256,36 +307,38 @@ async def refresh_token():
 async def logout():
     """로그아웃."""
     log_api_call(endpoint="POST /auth/logout", parameters={})
-    
+
     try:
-        with logging_system.performance_monitor.measure_operation("auth_logout") as monitor:
-            log_info("사용자 로그아웃 요청", category="authentication", context={
-                "source": "auth_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "auth_logout"
+        ) as monitor:
+            log_info(
+                "사용자 로그아웃 요청",
+                category="authentication",
+                context={"source": "auth_endpoint"},
+            )
+
             # TODO: 토큰 무효화 로직 구현
-            
+
             log_info("사용자 로그아웃 성공", category="authentication")
-            
+
             return JSONResponse({"message": "성공적으로 로그아웃되었습니다."})
-            
+
     except Exception as e:
-        log_error("로그아웃 중 오류", 
-                 category=ErrorCategory.AUTHENTICATION.value, 
-                 severity=ErrorSeverity.MEDIUM.value,
-                 context={
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "POST /auth/logout",
-            "operation": "user_logout"
-        })
-        
+        log_error(
+            "로그아웃 중 오류",
+            category=ErrorCategory.AUTHENTICATION.value,
+            severity=ErrorSeverity.MEDIUM.value,
+            context={"error": str(e), "error_type": type(e).__name__},
+        )
+
+        capture_exception(
+            e, {"endpoint": "POST /auth/logout", "operation": "user_logout"}
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="로그아웃 중 오류가 발생했습니다."
+            detail="로그아웃 중 오류가 발생했습니다.",
         )
 
 
@@ -293,13 +346,17 @@ async def logout():
 async def get_current_user():
     """현재 사용자 정보 조회."""
     log_api_call(endpoint="GET /auth/me", parameters={})
-    
+
     try:
-        with logging_system.performance_monitor.measure_operation("auth_get_user_info") as monitor:
-            log_info("사용자 정보 조회 요청", category="authentication", context={
-                "source": "auth_endpoint"
-            })
-            
+        with logging_system.performance_monitor.measure_operation(
+            "auth_get_user_info"
+        ) as monitor:
+            log_info(
+                "사용자 정보 조회 요청",
+                category="authentication",
+                context={"source": "auth_endpoint"},
+            )
+
             # TODO: JWT 토큰 검증 및 사용자 정보 반환
             user_data = {
                 "id": "user_123",
@@ -310,29 +367,26 @@ async def get_current_user():
                 "experience": 0,
                 "created_at": datetime.utcnow().isoformat(),
             }
-            
-            log_info("사용자 정보 조회 성공", category="authentication", context={
-                "user_id": user_data["id"],
-                "email": user_data["email"]
-            })
-            
+
+            log_info(
+                "사용자 정보 조회 성공",
+                category="authentication",
+                context={"user_id": user_data["id"], "email": user_data["email"]},
+            )
+
             return JSONResponse(user_data)
-            
+
     except Exception as e:
-        log_error("사용자 정보 조회 중 오류", 
-                 category=ErrorCategory.AUTHENTICATION.value, 
-                 severity=ErrorSeverity.MEDIUM.value,
-                 context={
-                     "error": str(e),
-                     "error_type": type(e).__name__
-                 })
-        
-        capture_exception(e, {
-            "endpoint": "GET /auth/me",
-            "operation": "get_user_info"
-        })
-        
+        log_error(
+            "사용자 정보 조회 중 오류",
+            category=ErrorCategory.AUTHENTICATION.value,
+            severity=ErrorSeverity.MEDIUM.value,
+            context={"error": str(e), "error_type": type(e).__name__},
+        )
+
+        capture_exception(e, {"endpoint": "GET /auth/me", "operation": "get_user_info"})
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="사용자 정보 조회 중 오류가 발생했습니다."
+            detail="사용자 정보 조회 중 오류가 발생했습니다.",
         )
