@@ -14,14 +14,18 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
-  const [language, setLanguage] = useState<'ko' | 'en'>('ko');
+  const [language, setLanguage] = useState<"ko" | "en">("ko");
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (!email || !password) {
-      setError(language === 'ko' ? "이메일과 비밀번호를 입력해주세요." : "Please enter email and password.");
+      setError(
+        language === "ko"
+          ? "이메일과 비밀번호를 입력해주세요."
+          : "Please enter email and password.",
+      );
       return;
     }
 
@@ -29,7 +33,10 @@ export const LoginPage: React.FC = () => {
       await signIn(email, password);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.message || (language === 'ko' ? "로그인에 실패했습니다." : "Login failed."));
+      setError(
+        err.message ||
+          (language === "ko" ? "로그인에 실패했습니다." : "Login failed."),
+      );
     }
   };
 
@@ -38,7 +45,12 @@ export const LoginPage: React.FC = () => {
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      setError(err.message || (language === 'ko' ? "Google 로그인에 실패했습니다." : "Google login failed."));
+      setError(
+        err.message ||
+          (language === "ko"
+            ? "Google 로그인에 실패했습니다."
+            : "Google login failed."),
+      );
     }
   };
 
@@ -47,7 +59,12 @@ export const LoginPage: React.FC = () => {
     try {
       await signInWithFacebook();
     } catch (err: any) {
-      setError(err.message || (language === 'ko' ? "Facebook 로그인에 실패했습니다." : "Facebook login failed."));
+      setError(
+        err.message ||
+          (language === "ko"
+            ? "Facebook 로그인에 실패했습니다."
+            : "Facebook login failed."),
+      );
     }
   };
 
@@ -58,21 +75,21 @@ export const LoginPage: React.FC = () => {
         <div className="flex justify-end mb-6">
           <div className="flex bg-gray-800 rounded-lg p-1">
             <button
-              onClick={() => setLanguage('ko')}
+              onClick={() => setLanguage("ko")}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                language === 'ko' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-400 hover:text-white'
+                language === "ko"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               🇰🇷 한국어
             </button>
             <button
-              onClick={() => setLanguage('en')}
+              onClick={() => setLanguage("en")}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                language === 'en' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-400 hover:text-white'
+                language === "en"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               🇺🇸 English
@@ -82,18 +99,18 @@ export const LoginPage: React.FC = () => {
 
         {/* 로고 및 헤더 */}
         <div className="text-center mb-8">
-          <div className="text-4xl font-bold text-white mb-2">
-            ⚡ OntoTrade
-          </div>
+          <div className="text-4xl font-bold text-white mb-2">⚡ OntoTrade</div>
           <p className="text-gray-400">
-            {language === 'ko' ? '증권 온톨로지 플랫폼' : 'Securities Ontology Platform'}
+            {language === "ko"
+              ? "증권 온톨로지 플랫폼"
+              : "Securities Ontology Platform"}
           </p>
         </div>
 
         {/* 로그인 폼 카드 */}
         <div className="bg-gray-800 rounded-lg p-8 shadow-xl">
           <h2 className="text-2xl font-bold text-white text-center mb-6">
-            {language === 'ko' ? '로그인' : 'Login'}
+            {language === "ko" ? "로그인" : "Login"}
           </h2>
 
           {/* 에러 메시지 */}
@@ -110,14 +127,16 @@ export const LoginPage: React.FC = () => {
             {/* 이메일 입력 */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                📧 {language === 'ko' ? '이메일' : 'Email'}
+                📧 {language === "ko" ? "이메일" : "Email"}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                placeholder={language === 'ko' ? '이메일을 입력하세요' : 'Enter your email'}
+                placeholder={
+                  language === "ko" ? "이메일을 입력하세요" : "Enter your email"
+                }
                 required
               />
             </div>
@@ -125,14 +144,18 @@ export const LoginPage: React.FC = () => {
             {/* 비밀번호 입력 */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                🔒 {language === 'ko' ? '비밀번호' : 'Password'}
+                🔒 {language === "ko" ? "비밀번호" : "Password"}
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                placeholder={language === 'ko' ? '비밀번호를 입력하세요' : 'Enter your password'}
+                placeholder={
+                  language === "ko"
+                    ? "비밀번호를 입력하세요"
+                    : "Enter your password"
+                }
                 required
               />
             </div>
@@ -146,8 +169,11 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
               />
-              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-300">
-                {language === 'ko' ? '로그인 상태 유지' : 'Remember me'}
+              <label
+                htmlFor="rememberMe"
+                className="ml-2 text-sm text-gray-300"
+              >
+                {language === "ko" ? "로그인 상태 유지" : "Remember me"}
               </label>
             </div>
 
@@ -160,12 +186,10 @@ export const LoginPage: React.FC = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  {language === 'ko' ? '로그인 중...' : 'Logging in...'}
+                  {language === "ko" ? "로그인 중..." : "Logging in..."}
                 </>
               ) : (
-                <>
-                  🚀 {language === 'ko' ? '로그인 하기' : 'Login'}
-                </>
+                <>🚀 {language === "ko" ? "로그인 하기" : "Login"}</>
               )}
             </button>
 
@@ -175,14 +199,14 @@ export const LoginPage: React.FC = () => {
                 to="/reset-password"
                 className="text-blue-400 hover:text-blue-300 transition-colors"
               >
-                {language === 'ko' ? '비밀번호 찾기' : 'Forgot Password'}
+                {language === "ko" ? "비밀번호 찾기" : "Forgot Password"}
               </Link>
               <span className="text-gray-500">|</span>
               <Link
                 to="/signup"
                 className="text-blue-400 hover:text-blue-300 transition-colors"
               >
-                {language === 'ko' ? '회원가입' : 'Sign Up'}
+                {language === "ko" ? "회원가입" : "Sign Up"}
               </Link>
             </div>
           </form>
@@ -195,7 +219,9 @@ export const LoginPage: React.FC = () => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-gray-800 text-gray-400">
-                  {language === 'ko' ? '──── 또는 소셜 로그인 ────' : '──── or social login ────'}
+                  {language === "ko"
+                    ? "──── 또는 소셜 로그인 ────"
+                    : "──── or social login ────"}
                 </span>
               </div>
             </div>
@@ -239,10 +265,9 @@ export const LoginPage: React.FC = () => {
         {/* 하단 안내 */}
         <div className="mt-8 text-center text-sm text-gray-400">
           <p>
-            {language === 'ko' 
-              ? '🎮 가상 투자 환경에서 안전하게 거래 연습을 시작하세요!' 
-              : '🎮 Start practicing trading safely in a virtual investment environment!'
-            }
+            {language === "ko"
+              ? "🎮 가상 투자 환경에서 안전하게 거래 연습을 시작하세요!"
+              : "🎮 Start practicing trading safely in a virtual investment environment!"}
           </p>
         </div>
       </div>

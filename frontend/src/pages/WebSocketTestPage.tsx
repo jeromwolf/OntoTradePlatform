@@ -13,22 +13,22 @@ import DataQualityDashboard from "../components/DataQuality/DataQualityDashboard
  */
 const WebSocketTestPage: React.FC = () => {
   const [showMonitor, setShowMonitor] = useState(false);
-  const [activeTab, setActiveTab] = useState<"realtime" | "quality">("realtime");
+  const [activeTab, setActiveTab] = useState<"realtime" | "quality">(
+    "realtime",
+  );
   const [subscribedSymbols, setSubscribedSymbols] = useState<string[]>([
     "AAPL",
-    "GOOGL", 
+    "GOOGL",
     "MSFT",
   ]);
-  const {
-    connectionHistory,
-    stats,
-    isConnected,
-    connectionStatus,
-  } = useWebSocketMonitor();
+  const { connectionHistory, stats, isConnected, connectionStatus } =
+    useWebSocketMonitor();
 
   const successRate =
-    stats.totalConnections > 0 
-      ? ((stats.totalConnections - stats.totalErrors) / stats.totalConnections) * 100 
+    stats.totalConnections > 0
+      ? ((stats.totalConnections - stats.totalErrors) /
+          stats.totalConnections) *
+        100
       : 0;
 
   useEffect(() => {
@@ -163,7 +163,9 @@ const WebSocketTestPage: React.FC = () => {
             <h3 className="font-medium text-gray-800 mb-2">연결 히스토리</h3>
             <div className="max-h-40 overflow-y-auto space-y-1">
               {connectionHistory.length === 0 ? (
-                <div className="text-gray-500 text-sm">연결 기록이 없습니다</div>
+                <div className="text-gray-500 text-sm">
+                  연결 기록이 없습니다
+                </div>
               ) : (
                 connectionHistory
                   .slice(-10)
