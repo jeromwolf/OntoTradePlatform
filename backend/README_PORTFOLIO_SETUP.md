@@ -187,13 +187,13 @@ $$ language 'plpgsql';
 
 -- 트리거: portfolios와 portfolio_settings 테이블에 updated_at 자동 갱신 적용
 DROP TRIGGER IF EXISTS update_portfolios_updated_at ON portfolios;
-CREATE TRIGGER update_portfolios_updated_at 
-    BEFORE UPDATE ON portfolios 
+CREATE TRIGGER update_portfolios_updated_at
+    BEFORE UPDATE ON portfolios
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS update_portfolio_settings_updated_at ON portfolio_settings;
-CREATE TRIGGER update_portfolio_settings_updated_at 
-    BEFORE UPDATE ON portfolio_settings 
+CREATE TRIGGER update_portfolio_settings_updated_at
+    BEFORE UPDATE ON portfolio_settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- 함수: 포트폴리오 생성 시 기본 설정 자동 생성

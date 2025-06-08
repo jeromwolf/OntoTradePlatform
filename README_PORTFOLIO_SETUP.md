@@ -21,7 +21,7 @@
    - 오류 없이 완료되면 성공
    - 왼쪽 메뉴 `Table Editor`에서 새로 생성된 테이블들 확인:
      - `portfolios`
-     - `portfolio_holdings` 
+     - `portfolio_holdings`
      - `portfolio_transactions`
      - `portfolio_performance`
      - `portfolio_settings`
@@ -36,7 +36,7 @@ python -m uvicorn app.main:socket_app --host 0.0.0.0 --port 8000 --reload
 ### 3단계: 프론트엔드 서버 실행
 
 ```bash
-cd frontend  
+cd frontend
 npm run dev
 ```
 

@@ -92,7 +92,7 @@ services:
 SUPABASE_URL=https://dev-project.supabase.co
 DEBUG=true
 
-# 스테이징환경  
+# 스테이징환경
 SUPABASE_URL=https://staging-project.supabase.co
 DEBUG=false
 

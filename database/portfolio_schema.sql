@@ -16,14 +16,14 @@ CREATE TABLE portfolios (
     risk_level VARCHAR(20) DEFAULT 'medium' CHECK (risk_level IN ('low', 'medium', 'high')),
     investment_goal TEXT,
     target_return DECIMAL(5, 2), -- 목표 수익률 (%)
-    
+
     -- 메타데이터
     metadata JSONB DEFAULT '{}',
-    
+
     -- 제약조건
     CONSTRAINT positive_balances CHECK (
-        initial_balance > 0 AND 
-        current_balance >= 0 AND 
+        initial_balance > 0 AND
+        current_balance >= 0 AND
         total_value >= 0
     )
 );
@@ -41,7 +41,7 @@ CREATE TABLE portfolio_holdings (
     realized_pnl DECIMAL(15, 2) DEFAULT 0, -- 실현 손익
     first_purchase_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- 제약조건
     CONSTRAINT positive_quantity CHECK (quantity >= 0),
     CONSTRAINT positive_prices CHECK (average_cost > 0),
@@ -60,15 +60,15 @@ CREATE TABLE portfolio_transactions (
     fees DECIMAL(10, 2) DEFAULT 0,
     executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     order_id UUID, -- 연결된 주문 ID (향후 확장용)
-    
+
     -- 메타데이터
     metadata JSONB DEFAULT '{}',
-    
+
     -- 제약조건
     CONSTRAINT positive_values CHECK (
-        quantity > 0 AND 
-        price > 0 AND 
-        total_amount > 0 AND 
+        quantity > 0 AND
+        price > 0 AND
+        total_amount > 0 AND
         fees >= 0
     )
 );
@@ -86,7 +86,7 @@ CREATE TABLE portfolio_performance (
     benchmark_return DECIMAL(10, 6), -- 벤치마크 대비 수익률
     volatility DECIMAL(10, 6), -- 변동성
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(portfolio_id, date)
 );
 
@@ -102,7 +102,7 @@ CREATE TABLE portfolio_settings (
     auto_rebalancing BOOLEAN DEFAULT FALSE,
     notifications_enabled BOOLEAN DEFAULT TRUE,
     email_alerts BOOLEAN DEFAULT TRUE,
-    
+
     -- 제약조건
     CONSTRAINT valid_thresholds CHECK (
         max_position_size > 0 AND max_position_size <= 100 AND
@@ -134,7 +134,7 @@ ALTER TABLE portfolio_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can only access their own portfolios" ON portfolios
     FOR ALL USING (auth.uid() = user_id);
 
--- 보유 종목 RLS 정책: 본인 포트폴리오의 보유종목만 접근 가능  
+-- 보유 종목 RLS 정책: 본인 포트폴리오의 보유종목만 접근 가능
 CREATE POLICY "Users can only access holdings of their portfolios" ON portfolio_holdings
     FOR ALL USING (
         portfolio_id IN (
