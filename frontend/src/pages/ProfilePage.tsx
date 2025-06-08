@@ -57,16 +57,17 @@ const ProfilePage: React.FC = () => {
 
       if (data) {
         // full_name이 비어있으면 user_metadata에서 이름을 가져오거나 기본값 설정
-        const userName = data.full_name || 
-                        user.user_metadata?.full_name || 
-                        user.user_metadata?.name ||
-                        "투자자님";
-        
+        const userName =
+          data.full_name ||
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          "투자자님";
+
         const updatedData = {
           ...data,
-          full_name: userName
+          full_name: userName,
         };
-        
+
         // 데이터베이스에서 full_name이 비어있었다면 업데이트
         if (!data.full_name && userName !== "투자자님") {
           console.log("User metadata:", user.user_metadata);
@@ -75,7 +76,7 @@ const ProfilePage: React.FC = () => {
             .update({ full_name: userName })
             .eq("id", user.id);
         }
-        
+
         setProfile(updatedData);
         setFormData({
           full_name: userName,
@@ -84,12 +85,16 @@ const ProfilePage: React.FC = () => {
         });
       } else {
         // 프로필이 없으면 기본 프로필 생성
-        const userName = user.user_metadata?.full_name || 
-                        user.user_metadata?.name || 
-                        "투자자님";
-        
-        console.log("Creating new profile with user metadata:", user.user_metadata);
-        
+        const userName =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          "투자자님";
+
+        console.log(
+          "Creating new profile with user metadata:",
+          user.user_metadata,
+        );
+
         const newProfile = {
           id: user.id,
           email: user.email || "",
@@ -127,9 +132,10 @@ const ProfilePage: React.FC = () => {
   // 프로필 이름 수정 함수 (기존에 "투자자님"으로 설정된 경우 실제 이름으로 변경)
   const fixProfileName = async () => {
     if (!user || !profile) return;
-    
-    const actualName = user.user_metadata?.full_name || user.user_metadata?.name;
-    
+
+    const actualName =
+      user.user_metadata?.full_name || user.user_metadata?.name;
+
     if (actualName && profile.full_name === "투자자님") {
       console.log("실제 이름으로 업데이트:", actualName);
       try {
@@ -137,10 +143,12 @@ const ProfilePage: React.FC = () => {
           .from("profiles")
           .update({ full_name: actualName })
           .eq("id", user.id);
-          
+
         if (!error) {
-          setProfile(prev => prev ? { ...prev, full_name: actualName } : null);
-          setFormData(prev => ({ ...prev, full_name: actualName }));
+          setProfile((prev) =>
+            prev ? { ...prev, full_name: actualName } : null,
+          );
+          setFormData((prev) => ({ ...prev, full_name: actualName }));
         }
       } catch (error) {
         console.error("프로필 이름 업데이트 실패:", error);
@@ -157,16 +165,16 @@ const ProfilePage: React.FC = () => {
   // 사용자 이름 표시 로직
   const getUserDisplayName = () => {
     if (!user) return "투자자님";
-    
+
     // 1. 사용자 메타데이터에서 이름 확인 (회원가입 시 저장된 이름)
     const userName = user.user_metadata?.full_name;
     if (userName) return userName;
-    
+
     // 2. 데이터베이스 프로필에서 이름 가져오기
     if (profile?.full_name) {
       return profile.full_name;
     }
-    
+
     return "투자자님";
   };
 

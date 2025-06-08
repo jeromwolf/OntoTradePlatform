@@ -3,7 +3,7 @@
 OntoTradePlatform - Simulation Module
 """
 
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, validator
 
 class TransactionType(str, Enum):
     """거래 유형"""
+
     BUY = "BUY"
     SELL = "SELL"
 
@@ -21,10 +22,15 @@ class TransactionType(str, Enum):
 # 기본 모델들
 class SimulationSessionBase(BaseModel):
     """시뮬레이션 세션 기본 모델"""
+
     session_name: str = Field(default="기본 시뮬레이션", max_length=100)
-    initial_cash: Decimal = Field(default=Decimal("100000000.00"), ge=0)  # 1억원 시작 자금
-    current_cash: Decimal = Field(default=Decimal("100000000.00"), ge=0)  # 1억원 현재 현금
-    total_value: Decimal = Field(default=Decimal("100000000.00"), ge=0)   # 1억원 총 자산
+    initial_cash: Decimal = Field(
+        default=Decimal("100000000.00"), ge=0
+    )  # 1억원 시작 자금
+    current_cash: Decimal = Field(
+        default=Decimal("100000000.00"), ge=0
+    )  # 1억원 현재 현금
+    total_value: Decimal = Field(default=Decimal("100000000.00"), ge=0)  # 1억원 총 자산
     total_pnl: Decimal = Field(default=Decimal("0.00"))
     total_pnl_percent: Decimal = Field(default=Decimal("0.00"))
     is_active: bool = Field(default=True)
@@ -32,6 +38,7 @@ class SimulationSessionBase(BaseModel):
 
 class SimulationHoldingBase(BaseModel):
     """시뮬레이션 보유종목 기본 모델"""
+
     symbol: str = Field(..., max_length=10)
     company_name: Optional[str] = Field(None, max_length=100)
     quantity: int = Field(..., ge=0)
@@ -50,6 +57,7 @@ class SimulationHoldingBase(BaseModel):
 
 class SimulationTransactionBase(BaseModel):
     """시뮬레이션 거래내역 기본 모델"""
+
     symbol: str = Field(..., max_length=10)
     company_name: Optional[str] = Field(None, max_length=100)
     transaction_type: TransactionType
@@ -65,6 +73,7 @@ class SimulationTransactionBase(BaseModel):
 
 class SimulationPerformanceBase(BaseModel):
     """시뮬레이션 성과 기본 모델"""
+
     performance_date: date
     cash_balance: Decimal = Field(..., ge=0)
     holdings_value: Decimal = Field(..., ge=0)
@@ -79,27 +88,32 @@ class SimulationPerformanceBase(BaseModel):
 # 생성 모델들
 class SimulationSessionCreate(SimulationSessionBase):
     """시뮬레이션 세션 생성 모델"""
+
     pass
 
 
 class SimulationHoldingCreate(SimulationHoldingBase):
     """시뮬레이션 보유종목 생성 모델"""
+
     session_id: UUID
 
 
 class SimulationTransactionCreate(SimulationTransactionBase):
     """시뮬레이션 거래내역 생성 모델"""
+
     session_id: UUID
 
 
 class SimulationPerformanceCreate(SimulationPerformanceBase):
     """시뮬레이션 성과 생성 모델"""
+
     session_id: UUID
 
 
 # 업데이트 모델들
 class SimulationSessionUpdate(BaseModel):
     """시뮬레이션 세션 업데이트 모델"""
+
     session_name: Optional[str] = Field(None, max_length=100)
     current_cash: Optional[Decimal] = Field(None, ge=0)
     total_value: Optional[Decimal] = Field(None, ge=0)
@@ -110,6 +124,7 @@ class SimulationSessionUpdate(BaseModel):
 
 class SimulationHoldingUpdate(BaseModel):
     """시뮬레이션 보유종목 업데이트 모델"""
+
     quantity: Optional[int] = Field(None, ge=0)
     avg_price: Optional[Decimal] = Field(None, gt=0)
     current_price: Optional[Decimal] = Field(None, gt=0)
@@ -126,6 +141,7 @@ class SimulationHoldingUpdate(BaseModel):
 # 응답 모델들
 class SimulationSession(SimulationSessionBase):
     """시뮬레이션 세션 응답 모델"""
+
     id: UUID
     user_id: UUID
     created_at: datetime
@@ -137,6 +153,7 @@ class SimulationSession(SimulationSessionBase):
 
 class SimulationHolding(SimulationHoldingBase):
     """시뮬레이션 보유종목 응답 모델"""
+
     id: UUID
     session_id: UUID
     created_at: datetime
@@ -148,6 +165,7 @@ class SimulationHolding(SimulationHoldingBase):
 
 class SimulationTransaction(SimulationTransactionBase):
     """시뮬레이션 거래내역 응답 모델"""
+
     id: UUID
     session_id: UUID
     executed_at: datetime
@@ -158,6 +176,7 @@ class SimulationTransaction(SimulationTransactionBase):
 
 class SimulationPerformance(SimulationPerformanceBase):
     """시뮬레이션 성과 응답 모델"""
+
     id: UUID
     session_id: UUID
     created_at: datetime
@@ -169,12 +188,14 @@ class SimulationPerformance(SimulationPerformanceBase):
 # 복합 응답 모델들
 class SimulationSessionDetail(SimulationSession):
     """상세 시뮬레이션 세션 정보"""
+
     holdings: List[SimulationHolding] = []
     recent_transactions: List[SimulationTransaction] = []
 
 
 class SimulationLeaderboard(BaseModel):
     """시뮬레이션 리더보드 모델"""
+
     session_id: UUID
     user_email: str
     session_name: str
@@ -193,17 +214,19 @@ class SimulationLeaderboard(BaseModel):
 # 거래 요청 모델
 class TradeRequest(BaseModel):
     """거래 요청 모델"""
+
     symbol: str = Field(..., max_length=10)
     transaction_type: TransactionType
     quantity: int = Field(..., gt=0)
-    
-    @validator('symbol')
+
+    @validator("symbol")
     def validate_symbol(cls, v):
         return v.upper().strip()
 
 
 class TradeResponse(BaseModel):
     """거래 응답 모델"""
+
     success: bool
     message: str
     transaction: Optional[SimulationTransaction] = None
@@ -213,6 +236,7 @@ class TradeResponse(BaseModel):
 # 통계 모델
 class SimulationStats(BaseModel):
     """시뮬레이션 통계 모델"""
+
     total_sessions: int
     active_sessions: int
     total_transactions: int
@@ -223,6 +247,7 @@ class SimulationStats(BaseModel):
 
 class PortfolioSummary(BaseModel):
     """포트폴리오 요약 모델"""
+
     session: SimulationSession
     holdings: List[SimulationHolding]
     total_invested: Decimal

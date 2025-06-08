@@ -12,7 +12,11 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, options?: { data?: any }) => Promise<any>;
+  signUp: (
+    email: string,
+    password: string,
+    options?: { data?: any },
+  ) => Promise<any>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
@@ -89,14 +93,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // 회원가입
-  const signUp = async (email: string, password: string, options?: { data?: any }) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    options?: { data?: any },
+  ) => {
     setLoading(true);
     try {
       // 1. Supabase 회원가입
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: options || {}
+        options: options || {},
       });
       if (error) throw error;
       console.log("Supabase signUp 응답:", data);
@@ -107,18 +115,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // 인증 토큰 가져오기
           const session = await supabase.auth.getSession();
           if (session.data.session?.access_token) {
-            const response = await fetch('http://localhost:8000/api/auth/register', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.data.session.access_token}`
+            const response = await fetch(
+              "http://localhost:8000/api/auth/register",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session.data.session.access_token}`,
+                },
+                body: JSON.stringify({
+                  email: email,
+                  password: password,
+                  fullName: options?.data?.fullName || "사용자",
+                }),
               },
-              body: JSON.stringify({
-                email: email,
-                password: password,
-                fullName: options?.data?.fullName || '사용자'
-              })
-            });
+            );
 
             if (response.ok) {
               const result = await response.json();

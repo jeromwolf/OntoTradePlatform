@@ -1,8 +1,8 @@
 """인증 미들웨어 및 유틸리티."""
 
+import logging
 from typing import Any, Dict, Optional
 from uuid import UUID
-import logging
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,6 +13,7 @@ from .supabase import SupabaseClient, get_supabase_client
 security = HTTPBearer()
 
 logger = logging.getLogger(__name__)
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -31,8 +32,10 @@ async def get_current_user(
     Raises:
         HTTPException: 인증 실패 시
     """
-    logger.info(f"인증 시도: 토큰 길이={len(credentials.credentials) if credentials.credentials else 0}")
-    
+    logger.info(
+        f"인증 시도: 토큰 길이={len(credentials.credentials) if credentials.credentials else 0}"
+    )
+
     try:
         # JWT 토큰에서 사용자 정보 추출
         token_payload = supabase_client.verify_jwt_token(credentials.credentials)
@@ -58,7 +61,7 @@ async def get_current_user(
 
         logger.info(f"인증 성공: 사용자 ID={user_id}")
         return user
-        
+
     except Exception as e:
         logger.error(f"인증 오류: {e}")
         raise HTTPException(

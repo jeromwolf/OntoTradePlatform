@@ -205,14 +205,14 @@ class StockDataSimulator:
             return
 
         self.is_running = False
-        
+
         if self.simulation_task:
             self.simulation_task.cancel()
             try:
                 await self.simulation_task
             except asyncio.CancelledError:
                 pass
-            
+
         logger.info("주식 데이터 시뮬레이션 중지")
 
     async def _run_simulation(self):
@@ -222,7 +222,7 @@ class StockDataSimulator:
                 # 모든 주식의 가격 업데이트
                 for symbol in self.stock_symbols.keys():
                     self.generate_price_update(symbol)
-                
+
                 # 2초마다 업데이트
                 await asyncio.sleep(2)
         except asyncio.CancelledError:

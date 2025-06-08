@@ -10,14 +10,14 @@ import { usePortfolio } from "../contexts/PortfolioContext";
 const PortfolioPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { 
-    portfolios, 
-    currentPortfolio, 
+  const {
+    portfolios,
+    currentPortfolio,
     holdings,
     transactions,
-    loading, 
+    loading,
     error,
-    selectPortfolio
+    selectPortfolio,
   } = usePortfolio();
 
   // 지원 언어 상태
@@ -36,7 +36,7 @@ const PortfolioPage: React.FC = () => {
       style: "currency",
       currency: language === "ko" ? "KRW" : "USD",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -69,18 +69,28 @@ const PortfolioPage: React.FC = () => {
         annualizedReturn: 0,
         volatility: 0,
         sharpeRatio: 0,
-        maxDrawdown: 0
+        maxDrawdown: 0,
       };
     }
 
-    const totalValue = holdings.reduce((sum, holding) => sum + ((holding.current_price || holding.average_cost) * holding.quantity), 0);
-    const totalCost = holdings.reduce((sum, holding) => sum + (holding.average_cost * holding.quantity), 0);
+    const totalValue = holdings.reduce(
+      (sum, holding) =>
+        sum +
+        (holding.current_price || holding.average_cost) * holding.quantity,
+      0,
+    );
+    const totalCost = holdings.reduce(
+      (sum, holding) => sum + holding.average_cost * holding.quantity,
+      0,
+    );
     const totalGainLoss = totalValue - totalCost;
-    const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
+    const totalGainLossPercent =
+      totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
     // 임시 일일 손익 계산 (실제로는 이전 종가 데이터가 필요)
     const dayGainLoss = totalGainLoss * 0.02; // 2% 임시 일일 변동
-    const dayGainLossPercent = totalValue > 0 ? (dayGainLoss / totalValue) * 100 : 0;
+    const dayGainLossPercent =
+      totalValue > 0 ? (dayGainLoss / totalValue) * 100 : 0;
 
     return {
       totalValue,
@@ -93,7 +103,7 @@ const PortfolioPage: React.FC = () => {
       annualizedReturn: totalGainLossPercent * 2, // 임시 연환산
       volatility: 15.5, // 임시 변동성
       sharpeRatio: 1.2, // 임시 샤프 비율
-      maxDrawdown: -8.5 // 임시 최대 낙폭
+      maxDrawdown: -8.5, // 임시 최대 낙폭
     };
   };
 
@@ -111,12 +121,13 @@ const PortfolioPage: React.FC = () => {
   }
 
   // 보유종목을 Position 형태로 변환
-  const positions: Position[] = holdings.map(holding => {
+  const positions: Position[] = holdings.map((holding) => {
     const currentPrice = holding.current_price || holding.average_cost;
     const marketValue = currentPrice * holding.quantity;
     const costBasis = holding.average_cost * holding.quantity;
     const unrealized_pnl = marketValue - costBasis;
-    const unrealized_pnl_percent = costBasis > 0 ? (unrealized_pnl / costBasis) * 100 : 0;
+    const unrealized_pnl_percent =
+      costBasis > 0 ? (unrealized_pnl / costBasis) * 100 : 0;
 
     return {
       symbol: holding.symbol,
@@ -125,17 +136,42 @@ const PortfolioPage: React.FC = () => {
       currentPrice,
       marketValue,
       unrealized_pnl,
-      unrealized_pnl_percent
+      unrealized_pnl_percent,
     };
   });
 
   // 섹터별 비중 계산 (임시 데이터)
   const sectorAllocations = [
-    { sector: language === "ko" ? "기술주" : "Technology", weight: 35, color: "#3b82f6", emoji: "💻" },
-    { sector: language === "ko" ? "금융" : "Finance", weight: 25, color: "#10b981", emoji: "🏦" },
-    { sector: language === "ko" ? "헬스케어" : "Healthcare", weight: 20, color: "#8b5cf6", emoji: "🏥" },
-    { sector: language === "ko" ? "소비재" : "Consumer", weight: 15, color: "#f59e0b", emoji: "🛍️" },
-    { sector: language === "ko" ? "기타" : "Others", weight: 5, color: "#6b7280", emoji: "📊" }
+    {
+      sector: language === "ko" ? "기술주" : "Technology",
+      weight: 35,
+      color: "#3b82f6",
+      emoji: "💻",
+    },
+    {
+      sector: language === "ko" ? "금융" : "Finance",
+      weight: 25,
+      color: "#10b981",
+      emoji: "🏦",
+    },
+    {
+      sector: language === "ko" ? "헬스케어" : "Healthcare",
+      weight: 20,
+      color: "#8b5cf6",
+      emoji: "🏥",
+    },
+    {
+      sector: language === "ko" ? "소비재" : "Consumer",
+      weight: 15,
+      color: "#f59e0b",
+      emoji: "🛍️",
+    },
+    {
+      sector: language === "ko" ? "기타" : "Others",
+      weight: 5,
+      color: "#6b7280",
+      emoji: "📊",
+    },
   ];
 
   const [selectedPeriod, setSelectedPeriod] = useState<
@@ -153,28 +189,34 @@ const PortfolioPage: React.FC = () => {
   // 로딩 상태 표시
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: "100vh", 
-        backgroundColor: "#0a0e27", 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center" 
-      }}>
-        <div style={{ 
-          color: "#e2e8f0", 
-          fontSize: "1.5rem", 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "1rem" 
-        }}>
-          <div style={{
-            width: "2rem",
-            height: "2rem",
-            border: "3px solid #374151",
-            borderTop: "3px solid #3b82f6",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite"
-          }} />
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#0a0e27",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            color: "#e2e8f0",
+            fontSize: "1.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+          }}
+        >
+          <div
+            style={{
+              width: "2rem",
+              height: "2rem",
+              border: "3px solid #374151",
+              borderTop: "3px solid #3b82f6",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          />
           {language === "ko" ? "포트폴리오 로딩 중..." : "Loading Portfolio..."}
         </div>
       </div>
@@ -184,28 +226,30 @@ const PortfolioPage: React.FC = () => {
   // 에러 상태 표시
   if (error) {
     return (
-      <div style={{ 
-        minHeight: "100vh", 
-        backgroundColor: "#0a0e27", 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center" 
-      }}>
-        <div style={{
-          backgroundColor: "#131629",
-          padding: "2rem",
-          borderRadius: "0.75rem",
-          border: "1px solid #ef4444",
-          textAlign: "center",
-          maxWidth: "400px"
-        }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#0a0e27",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "#131629",
+            padding: "2rem",
+            borderRadius: "0.75rem",
+            border: "1px solid #ef4444",
+            textAlign: "center",
+            maxWidth: "400px",
+          }}
+        >
           <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>❌</div>
           <h3 style={{ color: "#ef4444", marginBottom: "0.5rem" }}>
             {language === "ko" ? "오류 발생" : "Error Occurred"}
           </h3>
-          <p style={{ color: "#e2e8f0", marginBottom: "1.5rem" }}>
-            {error}
-          </p>
+          <p style={{ color: "#e2e8f0", marginBottom: "1.5rem" }}>{error}</p>
           <button
             onClick={() => window.location.reload()}
             style={{
@@ -216,7 +260,7 @@ const PortfolioPage: React.FC = () => {
               borderRadius: "0.5rem",
               cursor: "pointer",
               fontSize: "0.875rem",
-              fontWeight: "500"
+              fontWeight: "500",
             }}
           >
             {language === "ko" ? "다시 시도" : "Retry"}
@@ -227,7 +271,13 @@ const PortfolioPage: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0a0e27", padding: "1.5rem" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#0a0e27",
+        padding: "1.5rem",
+      }}
+    >
       {/* 스타일 정의 */}
       <style>{`
         @keyframes spin {
@@ -237,31 +287,37 @@ const PortfolioPage: React.FC = () => {
       `}</style>
 
       {/* 통합 네비게이션 헤더 */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "2rem",
-        padding: "1rem 0",
-        borderBottom: "1px solid #374151"
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "2rem",
+          padding: "1rem 0",
+          borderBottom: "1px solid #374151",
+        }}
+      >
         {/* 로고 및 네비게이션 */}
         <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-          <div 
+          <div
             onClick={() => navigate("/dashboard")}
             style={{
               fontSize: "1.5rem",
               fontWeight: "bold",
               color: "#3b82f6",
               cursor: "pointer",
-              transition: "color 0.3s ease"
+              transition: "color 0.3s ease",
             }}
-            onMouseEnter={(e) => (e.target as HTMLElement).style.color = "#1d4ed8"}
-            onMouseLeave={(e) => (e.target as HTMLElement).style.color = "#3b82f6"}
+            onMouseEnter={(e) =>
+              ((e.target as HTMLElement).style.color = "#1d4ed8")
+            }
+            onMouseLeave={(e) =>
+              ((e.target as HTMLElement).style.color = "#3b82f6")
+            }
           >
             💼 OntoTrade
           </div>
-          
+
           <button
             onClick={() => navigate("/dashboard")}
             style={{
@@ -273,7 +329,7 @@ const PortfolioPage: React.FC = () => {
               fontSize: "0.875rem",
               fontWeight: "500",
               cursor: "pointer",
-              transition: "all 0.3s ease"
+              transition: "all 0.3s ease",
             }}
             onMouseEnter={(e) => {
               (e.target as HTMLElement).style.backgroundColor = "#4b5563";
@@ -299,7 +355,7 @@ const PortfolioPage: React.FC = () => {
                 border: "1px solid #374151",
                 borderRadius: "0.5rem",
                 fontSize: "0.875rem",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               {portfolios.map((portfolio) => (
@@ -314,12 +370,14 @@ const PortfolioPage: React.FC = () => {
         {/* 사용자 컨트롤 */}
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           {/* 언어 토글 */}
-          <div style={{
-            display: "flex",
-            backgroundColor: "#131629",
-            borderRadius: "0.5rem",
-            padding: "0.25rem"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              backgroundColor: "#131629",
+              borderRadius: "0.5rem",
+              padding: "0.25rem",
+            }}
+          >
             <button
               onClick={() => setLanguage("ko")}
               style={{
@@ -331,7 +389,7 @@ const PortfolioPage: React.FC = () => {
                 fontSize: "0.875rem",
                 fontWeight: "500",
                 cursor: "pointer",
-                transition: "all 0.3s ease"
+                transition: "all 0.3s ease",
               }}
             >
               🇰🇷 한국어
@@ -347,7 +405,7 @@ const PortfolioPage: React.FC = () => {
                 fontSize: "0.875rem",
                 fontWeight: "500",
                 cursor: "pointer",
-                transition: "all 0.3s ease"
+                transition: "all 0.3s ease",
               }}
             >
               🇺🇸 English
@@ -355,7 +413,9 @@ const PortfolioPage: React.FC = () => {
           </div>
 
           {/* 사용자 정보 및 로그아웃 */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
             <span style={{ color: "#e2e8f0", fontSize: "0.875rem" }}>
               👤 {user?.email}
             </span>
@@ -370,7 +430,7 @@ const PortfolioPage: React.FC = () => {
                 fontSize: "0.875rem",
                 fontWeight: "500",
                 cursor: "pointer",
-                transition: "all 0.3s ease"
+                transition: "all 0.3s ease",
               }}
               onMouseEnter={(e) => {
                 (e.target as HTMLElement).style.backgroundColor = "#dc2626";
@@ -390,83 +450,143 @@ const PortfolioPage: React.FC = () => {
       <div style={{ maxWidth: "80rem", margin: "0 auto" }}>
         {/* 페이지 헤더 */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h1 style={{
-            fontSize: "2.25rem",
-            fontWeight: "bold",
-            color: "#e2e8f0",
-            marginBottom: "0.5rem"
-          }}>
+          <h1
+            style={{
+              fontSize: "2.25rem",
+              fontWeight: "bold",
+              color: "#e2e8f0",
+              marginBottom: "0.5rem",
+            }}
+          >
             💼 {language === "ko" ? "포트폴리오 관리" : "Portfolio Management"}
           </h1>
         </div>
 
         {/* 포트폴리오 개요 */}
-        <div style={{
-          backgroundColor: "#131629",
-          borderRadius: "0.75rem",
-          padding: "2rem",
-          marginBottom: "2rem"
-        }}>
-          <h2 style={{
-            fontSize: "1.5rem",
-            fontWeight: "600",
-            color: "#e2e8f0",
-            marginBottom: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem"
-          }}>
+        <div
+          style={{
+            backgroundColor: "#131629",
+            borderRadius: "0.75rem",
+            padding: "2rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "600",
+              color: "#e2e8f0",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
             📊 {language === "ko" ? "포트폴리오 개요" : "Portfolio Overview"}
           </h2>
 
           {/* 주요 지표 */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "1.5rem",
-            marginBottom: "2rem"
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "1.5rem",
+              marginBottom: "2rem",
+            }}
+          >
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 💰 {language === "ko" ? "총 자산" : "Total Assets"}
               </div>
-              <div style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#e2e8f0" }}>
+              <div
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: "bold",
+                  color: "#e2e8f0",
+                }}
+              >
                 {formatCurrency(portfolioSummary.totalValue)}
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 📈 {language === "ko" ? "일간수익" : "Daily P&L"}
               </div>
-              <div style={{
-                fontSize: "1.875rem",
-                fontWeight: "bold",
-                color: portfolioSummary.dayGainLoss >= 0 ? "#10b981" : "#ef4444"
-              }}>
+              <div
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: "bold",
+                  color:
+                    portfolioSummary.dayGainLoss >= 0 ? "#10b981" : "#ef4444",
+                }}
+              >
                 {formatCurrency(portfolioSummary.dayGainLoss)} (
                 {formatPercent(portfolioSummary.dayGainLossPercent)})
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 💸 {language === "ko" ? "투자원금" : "Initial Investment"}
               </div>
-              <div style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#e2e8f0" }}>
+              <div
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: "bold",
+                  color: "#e2e8f0",
+                }}
+              >
                 {formatCurrency(portfolioSummary.totalCost)}
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "0.5rem" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 🎯 {language === "ko" ? "목표수익률" : "Target Return"}
               </div>
-              <div style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#3b82f6" }}>
+              <div
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: "bold",
+                  color: "#3b82f6",
+                }}
+              >
                 {portfolioSummary.totalReturn}%
               </div>
             </div>
           </div>
 
           {/* 기간 선택 */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.5rem" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+              marginBottom: "1.5rem",
+            }}
+          >
             {periods.map((period) => (
               <button
                 key={period.key}
@@ -477,13 +597,14 @@ const PortfolioPage: React.FC = () => {
                 }
                 style={{
                   padding: "0.75rem 1.5rem",
-                  backgroundColor: selectedPeriod === period.key ? "#3b82f6" : "#374151",
+                  backgroundColor:
+                    selectedPeriod === period.key ? "#3b82f6" : "#374151",
                   color: selectedPeriod === period.key ? "#ffffff" : "#d1d5db",
                   border: "none",
                   borderRadius: "0.5rem",
                   fontWeight: "500",
                   cursor: "pointer",
-                  transition: "all 0.3s ease"
+                  transition: "all 0.3s ease",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedPeriod !== period.key) {
@@ -502,15 +623,17 @@ const PortfolioPage: React.FC = () => {
           </div>
 
           {/* 수익률 차트 플레이스홀더 */}
-          <div style={{
-            backgroundColor: "#374151",
-            borderRadius: "0.75rem",
-            padding: "2rem",
-            height: "16rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
+          <div
+            style={{
+              backgroundColor: "#374151",
+              borderRadius: "0.75rem",
+              padding: "2rem",
+              height: "16rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <div style={{ textAlign: "center", color: "#64748b" }}>
               <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>📈</div>
               <div style={{ fontSize: "1.125rem", fontWeight: "500" }}>
@@ -525,52 +648,108 @@ const PortfolioPage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}
+        >
           {/* 보유 종목 */}
-          <div style={{ backgroundColor: "#131629", borderRadius: "0.75rem", padding: "2rem" }}>
-            <h3 style={{
-              fontSize: "1.5rem",
-              fontWeight: "600",
-              color: "#e2e8f0",
-              marginBottom: "1.5rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem"
-            }}>
+          <div
+            style={{
+              backgroundColor: "#131629",
+              borderRadius: "0.75rem",
+              padding: "2rem",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                color: "#e2e8f0",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               🏷️ {language === "ko" ? "보유 종목" : "Holdings"}
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: "1rem",
+                marginBottom: "2rem",
+              }}
+            >
               <div style={{ fontSize: "0.875rem", color: "#64748b" }}>
                 {language === "ko" ? "종목명" : "Symbol"}
               </div>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  textAlign: "center",
+                }}
+              >
                 {language === "ko" ? "수량" : "Qty"}
               </div>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  textAlign: "center",
+                }}
+              >
                 {language === "ko" ? "비중" : "Weight"}
               </div>
-              <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#64748b",
+                  textAlign: "center",
+                }}
+              >
                 {language === "ko" ? "손익" : "P&L"}
               </div>
 
               {positions.map((position) => (
                 <React.Fragment key={position.symbol}>
-                  <div style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "#e2e8f0",
+                    }}
+                  >
                     {position.symbol}
                   </div>
-                  <div style={{ fontSize: "1rem", color: "#d1d5db", textAlign: "center" }}>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#d1d5db",
+                      textAlign: "center",
+                    }}
+                  >
                     {position.quantity}
                   </div>
-                  <div style={{ fontSize: "1rem", color: "#d1d5db", textAlign: "center" }}>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#d1d5db",
+                      textAlign: "center",
+                    }}
+                  >
                     {position.marketValue}
                   </div>
-                  <div style={{
-                    fontSize: "1rem",
-                    fontWeight: "500",
-                    color: position.unrealized_pnl >= 0 ? "#10b981" : "#ef4444",
-                    textAlign: "center"
-                  }}>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color:
+                        position.unrealized_pnl >= 0 ? "#10b981" : "#ef4444",
+                      textAlign: "center",
+                    }}
+                  >
                     {formatPercent(position.unrealized_pnl_percent)}
                   </div>
                 </React.Fragment>
@@ -587,11 +766,12 @@ const PortfolioPage: React.FC = () => {
                   borderRadius: "0.5rem",
                   fontWeight: "500",
                   cursor: "pointer",
-                  transition: "all 0.3s ease"
+                  transition: "all 0.3s ease",
                 }}
                 onMouseEnter={(e) => {
                   (e.target as HTMLElement).style.backgroundColor = "#1d4ed8";
-                  (e.target as HTMLElement).style.transform = "translateY(-1px)";
+                  (e.target as HTMLElement).style.transform =
+                    "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
                   (e.target as HTMLElement).style.backgroundColor = "#3b82f6";
@@ -609,11 +789,12 @@ const PortfolioPage: React.FC = () => {
                   borderRadius: "0.5rem",
                   fontWeight: "500",
                   cursor: "pointer",
-                  transition: "all 0.3s ease"
+                  transition: "all 0.3s ease",
                 }}
                 onMouseEnter={(e) => {
                   (e.target as HTMLElement).style.backgroundColor = "#dc2626";
-                  (e.target as HTMLElement).style.transform = "translateY(-1px)";
+                  (e.target as HTMLElement).style.transform =
+                    "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
                   (e.target as HTMLElement).style.backgroundColor = "#ef4444";
@@ -626,33 +807,51 @@ const PortfolioPage: React.FC = () => {
           </div>
 
           {/* 거래 내역 */}
-          <div style={{ backgroundColor: "#131629", borderRadius: "0.75rem", padding: "2rem" }}>
-            <h3 style={{
-              fontSize: "1.5rem",
-              fontWeight: "600",
-              color: "#e2e8f0",
-              marginBottom: "1.5rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem"
-            }}>
+          <div
+            style={{
+              backgroundColor: "#131629",
+              borderRadius: "0.75rem",
+              padding: "2rem",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                color: "#e2e8f0",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               📋 {language === "ko" ? "거래 내역" : "Transaction History"}
             </h3>
 
             {/* 빈 상태 메시지 */}
             {positions.length === 0 ? (
-              <div style={{
-                textAlign: "center",
-                padding: "3rem",
-                color: "#64748b"
-              }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "3rem",
+                  color: "#64748b",
+                }}
+              >
                 <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📊</div>
-                <h4 style={{ fontSize: "1.25rem", marginBottom: "0.5rem", color: "#e2e8f0" }}>
-                  {language === "ko" ? "포트폴리오가 비어있습니다" : "Portfolio is Empty"}
+                <h4
+                  style={{
+                    fontSize: "1.25rem",
+                    marginBottom: "0.5rem",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {language === "ko"
+                    ? "포트폴리오가 비어있습니다"
+                    : "Portfolio is Empty"}
                 </h4>
                 <p style={{ fontSize: "0.875rem" }}>
-                  {language === "ko" 
-                    ? "첫 번째 투자를 시작해보세요" 
+                  {language === "ko"
+                    ? "첫 번째 투자를 시작해보세요"
                     : "Start your first investment"}
                 </p>
                 <button
@@ -665,40 +864,84 @@ const PortfolioPage: React.FC = () => {
                     fontWeight: "500",
                     cursor: "pointer",
                     marginTop: "1rem",
-                    fontSize: "0.875rem"
+                    fontSize: "0.875rem",
                   }}
                 >
-                  📈 {language === "ko" ? "종목 추가하기" : "Add First Position"}
+                  📈{" "}
+                  {language === "ko" ? "종목 추가하기" : "Add First Position"}
                 </button>
               </div>
             ) : (
               <>
                 {/* 거래내역 헤더 */}
-                <div style={{ 
-                  display: "grid", 
-                  gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr", 
-                  gap: "1rem", 
-                  marginBottom: "1rem",
-                  padding: "0.75rem",
-                  backgroundColor: "#0a0e27",
-                  borderRadius: "0.5rem"
-                }}>
-                  <div style={{ fontSize: "0.875rem", color: "#64748b", fontWeight: "600" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr",
+                    gap: "1rem",
+                    marginBottom: "1rem",
+                    padding: "0.75rem",
+                    backgroundColor: "#0a0e27",
+                    borderRadius: "0.5rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      fontWeight: "600",
+                    }}
+                  >
                     {language === "ko" ? "날짜" : "Date"}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     {language === "ko" ? "종목" : "Symbol"}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     {language === "ko" ? "유형" : "Type"}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     {language === "ko" ? "수량" : "Quantity"}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     {language === "ko" ? "가격" : "Price"}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  >
                     {language === "ko" ? "총액" : "Total"}
                   </div>
                 </div>
@@ -715,48 +958,91 @@ const PortfolioPage: React.FC = () => {
                       backgroundColor: "#1e293b",
                       borderRadius: "0.5rem",
                       marginBottom: "0.5rem",
-                      transition: "all 0.3s ease"
+                      transition: "all 0.3s ease",
                     }}
                   >
                     <div style={{ color: "#e2e8f0", fontSize: "0.875rem" }}>
-                      {new Date(transaction.transaction_date).toLocaleDateString(
-                        language === "ko" ? "ko-KR" : "en-US"
+                      {new Date(
+                        transaction.transaction_date,
+                      ).toLocaleDateString(
+                        language === "ko" ? "ko-KR" : "en-US",
                       )}
                     </div>
-                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem", fontWeight: "500" }}>
+                    <div
+                      style={{
+                        color: "#e2e8f0",
+                        textAlign: "center",
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                      }}
+                    >
                       {transaction.symbol}
                     </div>
-                    <div style={{ 
-                      textAlign: "center", 
-                      fontSize: "0.875rem",
-                      color: transaction.transaction_type === "BUY" ? "#10b981" : "#ef4444",
-                      fontWeight: "500"
-                    }}>
-                      {transaction.transaction_type === "BUY" 
-                        ? (language === "ko" ? "매수" : "BUY") 
-                        : (language === "ko" ? "매도" : "SELL")}
+                    <div
+                      style={{
+                        textAlign: "center",
+                        fontSize: "0.875rem",
+                        color:
+                          transaction.transaction_type === "BUY"
+                            ? "#10b981"
+                            : "#ef4444",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {transaction.transaction_type === "BUY"
+                        ? language === "ko"
+                          ? "매수"
+                          : "BUY"
+                        : language === "ko"
+                          ? "매도"
+                          : "SELL"}
                     </div>
-                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem" }}>
+                    <div
+                      style={{
+                        color: "#e2e8f0",
+                        textAlign: "center",
+                        fontSize: "0.875rem",
+                      }}
+                    >
                       {transaction.quantity.toLocaleString()}
                     </div>
-                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem" }}>
+                    <div
+                      style={{
+                        color: "#e2e8f0",
+                        textAlign: "center",
+                        fontSize: "0.875rem",
+                      }}
+                    >
                       {formatCurrency(transaction.price)}
                     </div>
-                    <div style={{ color: "#e2e8f0", textAlign: "center", fontSize: "0.875rem", fontWeight: "500" }}>
+                    <div
+                      style={{
+                        color: "#e2e8f0",
+                        textAlign: "center",
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                      }}
+                    >
                       {formatCurrency(transaction.total_amount)}
                     </div>
                   </div>
                 ))}
 
                 {transactions.length === 0 && (
-                  <div style={{
-                    textAlign: "center",
-                    padding: "2rem",
-                    color: "#64748b"
-                  }}>
-                    <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>📋</div>
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "2rem",
+                      color: "#64748b",
+                    }}
+                  >
+                    <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>
+                      📋
+                    </div>
                     <p style={{ fontSize: "0.875rem" }}>
-                      {language === "ko" ? "거래 내역이 없습니다" : "No transaction history"}
+                      {language === "ko"
+                        ? "거래 내역이 없습니다"
+                        : "No transaction history"}
                     </p>
                   </div>
                 )}
@@ -765,51 +1051,99 @@ const PortfolioPage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}
+        >
           {/* 자산 분석 */}
-          <div style={{ backgroundColor: "#131629", borderRadius: "0.75rem", padding: "2rem" }}>
-            <h3 style={{
-              fontSize: "1.5rem",
-              fontWeight: "600",
-              color: "#e2e8f0",
-              marginBottom: "1.5rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem"
-            }}>
+          <div
+            style={{
+              backgroundColor: "#131629",
+              borderRadius: "0.75rem",
+              padding: "2rem",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "600",
+                color: "#e2e8f0",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               📊 {language === "ko" ? "자산 분석" : "Asset Analysis"}
             </h3>
 
             {/* 섹터별 비중 */}
             <div style={{ marginBottom: "2rem" }}>
-              <h4 style={{
-                fontSize: "1.125rem",
-                fontWeight: "500",
-                color: "#e2e8f0",
-                marginBottom: "1rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem"
-              }}>
+              <h4
+                style={{
+                  fontSize: "1.125rem",
+                  fontWeight: "500",
+                  color: "#e2e8f0",
+                  marginBottom: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
                 🥧 {language === "ko" ? "섹터별 비중" : "Sector Allocation"}
               </h4>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
                 {sectorAllocations.map((sector, index) => (
-                  <div key={index} style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "1rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
                       <span style={{ fontSize: "1.5rem" }}>{sector.emoji}</span>
-                      <span style={{ fontSize: "1rem", color: "#d1d5db" }}>{sector.sector}</span>
+                      <span style={{ fontSize: "1rem", color: "#d1d5db" }}>
+                        {sector.sector}
+                      </span>
                     </div>
-                    <div style={{ flex: 1, backgroundColor: "#374151", borderRadius: "0.5rem", height: "1rem" }}>
-                      <div style={{
-                        height: "1rem",
+                    <div
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#374151",
                         borderRadius: "0.5rem",
-                        backgroundColor: sector.color,
-                        width: `${sector.weight}%`
-                      }}></div>
+                        height: "1rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: "1rem",
+                          borderRadius: "0.5rem",
+                          backgroundColor: sector.color,
+                          width: `${sector.weight}%`,
+                        }}
+                      ></div>
                     </div>
-                    <div style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                    <div
+                      style={{
+                        fontSize: "1rem",
+                        fontWeight: "500",
+                        color: "#e2e8f0",
+                      }}
+                    >
                       {sector.weight}%
                     </div>
                   </div>
@@ -819,59 +1153,104 @@ const PortfolioPage: React.FC = () => {
 
             {/* 성과 지표 */}
             <div>
-              <h4 style={{
-                fontSize: "1.125rem",
-                fontWeight: "500",
-                color: "#e2e8f0",
-                marginBottom: "1rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem"
-              }}>
+              <h4
+                style={{
+                  fontSize: "1.125rem",
+                  fontWeight: "500",
+                  color: "#e2e8f0",
+                  marginBottom: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
                 📈 {language === "ko" ? "성과 지표" : "Performance Metrics"}
               </h4>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "1rem",
+                }}
+              >
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span style={{ fontSize: "1rem", color: "#64748b" }}>
                     {language === "ko" ? "총 수익률" : "Total Return"}:
                   </span>
-                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#10b981" }}>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "#10b981",
+                    }}
+                  >
                     {formatPercent(portfolioSummary.totalReturn)}
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span style={{ fontSize: "1rem", color: "#64748b" }}>
-                    {language === "ko"
-                      ? "연환산 수익률"
-                      : "Annualized Return"}
-                    :
+                    {language === "ko" ? "연환산 수익률" : "Annualized Return"}:
                   </span>
-                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#10b981" }}>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "#10b981",
+                    }}
+                  >
                     {formatPercent(portfolioSummary.annualizedReturn)}
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span style={{ fontSize: "1rem", color: "#64748b" }}>
                     {language === "ko" ? "변동성" : "Volatility"}:
                   </span>
-                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "#e2e8f0",
+                    }}
+                  >
                     {portfolioSummary.volatility}%
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span style={{ fontSize: "1rem", color: "#64748b" }}>
                     {language === "ko" ? "샤프 비율" : "Sharpe Ratio"}:
                   </span>
-                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#e2e8f0" }}>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "#e2e8f0",
+                    }}
+                  >
                     {portfolioSummary.sharpeRatio}
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span style={{ fontSize: "1rem", color: "#64748b" }}>
                     {language === "ko" ? "최대 낙폭" : "Max Drawdown"}:
                   </span>
-                  <span style={{ fontSize: "1rem", fontWeight: "500", color: "#ef4444" }}>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: "500",
+                      color: "#ef4444",
+                    }}
+                  >
                     {formatPercent(portfolioSummary.maxDrawdown)}
                   </span>
                 </div>

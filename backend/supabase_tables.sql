@@ -102,16 +102,16 @@ END;
 $$ language 'plpgsql';
 
 -- updated_at 트리거 설정
-CREATE TRIGGER update_simulation_sessions_updated_at 
-    BEFORE UPDATE ON simulation_sessions 
+CREATE TRIGGER update_simulation_sessions_updated_at
+    BEFORE UPDATE ON simulation_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_simulation_holdings_updated_at 
-    BEFORE UPDATE ON simulation_holdings 
+CREATE TRIGGER update_simulation_holdings_updated_at
+    BEFORE UPDATE ON simulation_holdings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_user_watchlists_updated_at 
-    BEFORE UPDATE ON user_watchlists 
+CREATE TRIGGER update_user_watchlists_updated_at
+    BEFORE UPDATE ON user_watchlists
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- 댓글: 테이블 생성 완료!

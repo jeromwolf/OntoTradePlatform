@@ -10,7 +10,7 @@ export interface Portfolio {
   initial_balance: number;
   current_balance: number;
   total_value: number;
-  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  risk_level: "LOW" | "MEDIUM" | "HIGH";
   investment_goal?: string;
   target_return?: number;
   created_at: string;
@@ -36,7 +36,7 @@ export interface Transaction {
   id: string;
   portfolio_id: string;
   symbol: string;
-  transaction_type: 'BUY' | 'SELL';
+  transaction_type: "BUY" | "SELL";
   quantity: number;
   price: number;
   total_amount: number;
@@ -83,7 +83,7 @@ export interface PortfolioCreateData {
   name: string;
   description?: string;
   initial_balance: number;
-  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  risk_level: "LOW" | "MEDIUM" | "HIGH";
   investment_goal?: string;
   target_return?: number;
 }
@@ -96,7 +96,7 @@ export interface HoldingCreateData {
 
 export interface TransactionCreateData {
   symbol: string;
-  transaction_type: 'BUY' | 'SELL';
+  transaction_type: "BUY" | "SELL";
   quantity: number;
   price: number;
   fees?: number;

@@ -3,7 +3,7 @@
  * OntoTradePlatform - Simulation API Integration
  */
 
-import { apiRequest, getAuthHeaders, API_BASE_URL } from './api';
+import { apiRequest, getAuthHeaders, API_BASE_URL } from "./api";
 
 const SIMULATION_API_URL = `${API_BASE_URL}/simulation`;
 
@@ -35,7 +35,7 @@ export interface SimulationSession {
 
 export interface Transaction {
   symbol: string;
-  action: 'BUY' | 'SELL';
+  action: "BUY" | "SELL";
   quantity: number;
   price: number;
   total_amount: number;
@@ -77,9 +77,9 @@ export interface ApiResponse<T> {
 export const getStockData = async (): Promise<Record<string, StockData>> => {
   try {
     const response = await fetch(`${SIMULATION_API_URL}/stocks`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -87,15 +87,16 @@ export const getStockData = async (): Promise<Record<string, StockData>> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result: ApiResponse<Record<string, StockData>> = await response.json();
-    
+    const result: ApiResponse<Record<string, StockData>> =
+      await response.json();
+
     if (!result.success) {
-      throw new Error('주식 데이터 조회 실패');
+      throw new Error("주식 데이터 조회 실패");
     }
 
     return result.data;
   } catch (error) {
-    console.error('주식 데이터 조회 중 오류:', error);
+    console.error("주식 데이터 조회 중 오류:", error);
     throw error;
   }
 };
@@ -105,17 +106,20 @@ export const getStockData = async (): Promise<Record<string, StockData>> => {
  */
 export const startSimulation = async (): Promise<SimulationSession> => {
   try {
-    const result: ApiResponse<SimulationSession> = await apiRequest(`${SIMULATION_API_URL}/start`, {
-      method: 'POST',
-    });
-    
+    const result: ApiResponse<SimulationSession> = await apiRequest(
+      `${SIMULATION_API_URL}/start`,
+      {
+        method: "POST",
+      },
+    );
+
     if (!result.success) {
-      throw new Error('시뮬레이션 시작 실패');
+      throw new Error("시뮬레이션 시작 실패");
     }
 
     return result.data;
   } catch (error) {
-    console.error('시뮬레이션 시작 중 오류:', error);
+    console.error("시뮬레이션 시작 중 오류:", error);
     throw error;
   }
 };
@@ -125,26 +129,26 @@ export const startSimulation = async (): Promise<SimulationSession> => {
  */
 export const executeTrade = async (
   symbol: string,
-  action: 'BUY' | 'SELL',
-  quantity: number
+  action: "BUY" | "SELL",
+  quantity: number,
 ): Promise<any> => {
   try {
     const result = await apiRequest(`${SIMULATION_API_URL}/trade`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
         symbol,
         action,
         quantity,
       }),
     });
-    
+
     if (!result.success) {
-      throw new Error('거래 실행 실패');
+      throw new Error("거래 실행 실패");
     }
 
     return result.data;
   } catch (error) {
-    console.error('거래 실행 중 오류:', error);
+    console.error("거래 실행 중 오류:", error);
     throw error;
   }
 };
@@ -152,17 +156,19 @@ export const executeTrade = async (
 /**
  * 시뮬레이션 포트폴리오 조회
  */
-export const getSimulationPortfolio = async (): Promise<SimulationSession & { detailed_holdings: DetailedHolding[] }> => {
+export const getSimulationPortfolio = async (): Promise<
+  SimulationSession & { detailed_holdings: DetailedHolding[] }
+> => {
   try {
     const result = await apiRequest(`${SIMULATION_API_URL}/portfolio`);
-    
+
     if (!result.success) {
-      throw new Error('포트폴리오 조회 실패');
+      throw new Error("포트폴리오 조회 실패");
     }
 
     return result.data;
   } catch (error) {
-    console.error('포트폴리오 조회 중 오류:', error);
+    console.error("포트폴리오 조회 중 오류:", error);
     throw error;
   }
 };
@@ -173,9 +179,9 @@ export const getSimulationPortfolio = async (): Promise<SimulationSession & { de
 export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   try {
     const response = await fetch(`${SIMULATION_API_URL}/leaderboard`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -184,14 +190,14 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     }
 
     const result: ApiResponse<LeaderboardEntry[]> = await response.json();
-    
+
     if (!result.success) {
-      throw new Error('리더보드 조회 실패');
+      throw new Error("리더보드 조회 실패");
     }
 
     return result.data;
   } catch (error) {
-    console.error('리더보드 조회 중 오류:', error);
+    console.error("리더보드 조회 중 오류:", error);
     throw error;
   }
 };
@@ -202,13 +208,13 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
 export const createWebSocketConnection = (
   onMessage: (data: any) => void,
   onError?: (error: Event) => void,
-  onClose?: (event: CloseEvent) => void
+  onClose?: (event: CloseEvent) => void,
 ): WebSocket => {
   const wsUrl = `ws://127.0.0.1:8000/api/simulation/ws`;
   const ws = new WebSocket(wsUrl);
 
   ws.onopen = (event) => {
-    console.log('WebSocket 연결 성공:', event);
+    console.log("WebSocket 연결 성공:", event);
   };
 
   ws.onmessage = (event) => {
@@ -216,19 +222,19 @@ export const createWebSocketConnection = (
       const data = JSON.parse(event.data);
       onMessage(data);
     } catch (error) {
-      console.error('WebSocket 메시지 파싱 오류:', error);
+      console.error("WebSocket 메시지 파싱 오류:", error);
     }
   };
 
   ws.onerror = (error) => {
-    console.error('WebSocket 오류:', error);
+    console.error("WebSocket 오류:", error);
     if (onError) {
       onError(error);
     }
   };
 
   ws.onclose = (event) => {
-    console.log('WebSocket 연결 종료:', event);
+    console.log("WebSocket 연결 종료:", event);
     if (onClose) {
       onClose(event);
     }
@@ -241,9 +247,9 @@ export const createWebSocketConnection = (
  * 통화 포맷팅 유틸리티
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
+  return new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency: "KRW",
   }).format(amount);
 };
 
@@ -251,12 +257,12 @@ export const formatCurrency = (amount: number): string => {
  * 퍼센트 포맷팅 유틸리티
  */
 export const formatPercent = (value: number): string => {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 };
 
 /**
  * 숫자 포맷팅 유틸리티 (천 단위 콤마)
  */
 export const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('ko-KR').format(value);
+  return new Intl.NumberFormat("ko-KR").format(value);
 };

@@ -6,8 +6,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.endpoints import portfolio_holdings, portfolios, stock_search, watchlist, auth
-from app.routers import simulation
+from app.api.endpoints import (
+    auth,
+    portfolio_holdings,
+    portfolios,
+    stock_search,
+    watchlist,
+)
 from app.core.config import settings
 from app.core.monitoring import init_sentry
 from app.core.websocket_simple import (
@@ -15,6 +20,7 @@ from app.core.websocket_simple import (
     websocket_manager,
     ws_router,
 )
+from app.routers import simulation
 
 
 def create_app() -> FastAPI:
@@ -85,13 +91,16 @@ async def websocket_stats():
 async def debug_env():
     """환경 변수 상태 확인 (디버그용)"""
     import os
-    return JSONResponse({
-        "supabase_url": bool(os.getenv("SUPABASE_URL")),
-        "supabase_anon_key": bool(os.getenv("SUPABASE_ANON_KEY")),
-        "supabase_service_key": bool(os.getenv("SUPABASE_SERVICE_KEY")),
-        "database_url": bool(os.getenv("ASYNC_DATABASE_URL")),
-        "env_loaded": True
-    })
+
+    return JSONResponse(
+        {
+            "supabase_url": bool(os.getenv("SUPABASE_URL")),
+            "supabase_anon_key": bool(os.getenv("SUPABASE_ANON_KEY")),
+            "supabase_service_key": bool(os.getenv("SUPABASE_SERVICE_KEY")),
+            "database_url": bool(os.getenv("ASYNC_DATABASE_URL")),
+            "env_loaded": True,
+        }
+    )
 
 
 # WebSocket 라우터 포함

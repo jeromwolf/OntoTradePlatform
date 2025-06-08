@@ -117,7 +117,7 @@ CREATE POLICY "Users can insert their own simulation transactions" ON simulation
 
 -- 리더보드를 위한 공개 뷰 생성 (거래내역 기반으로 계산)
 CREATE OR REPLACE VIEW simulation_leaderboard AS
-SELECT 
+SELECT
     s.id as session_id,
     u.email as user_email,
     s.session_name,
@@ -146,10 +146,10 @@ END;
 $$ language 'plpgsql';
 
 -- 트리거 생성
-CREATE TRIGGER update_simulation_sessions_updated_at BEFORE UPDATE ON simulation_sessions 
+CREATE TRIGGER update_simulation_sessions_updated_at BEFORE UPDATE ON simulation_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_simulation_holdings_updated_at BEFORE UPDATE ON simulation_holdings 
+CREATE TRIGGER update_simulation_holdings_updated_at BEFORE UPDATE ON simulation_holdings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- 초기 데이터 삽입을 위한 함수
@@ -161,7 +161,7 @@ BEGIN
     INSERT INTO simulation_sessions (user_id, session_name, initial_cash, current_cash, total_value)
     VALUES (user_uuid, '기본 시뮬레이션', 100000000.00, 100000000.00, 100000000.00)
     RETURNING id INTO new_session_id;
-    
+
     RETURN new_session_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -173,13 +173,13 @@ BEGIN
     -- 새 사용자가 생성되면 자동으로 기본 시뮬레이션 세션 생성
     INSERT INTO simulation_sessions (user_id, session_name, initial_cash, current_cash, total_value)
     VALUES (NEW.id, '기본 시뮬레이션', 100000000.00, 100000000.00, 100000000.00);
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- auth.users 테이블에 트리거 설정 (Supabase에서 사용자 생성시 자동 실행)
 -- 주의: 이 트리거는 Supabase 콘솔에서 수동으로 설정해야 할 수 있습니다
--- CREATE TRIGGER on_auth_user_created 
---     AFTER INSERT ON auth.users 
+-- CREATE TRIGGER on_auth_user_created
+--     AFTER INSERT ON auth.users
 --     FOR EACH ROW EXECUTE FUNCTION auto_create_simulation_session();
