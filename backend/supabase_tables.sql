@@ -1,6 +1,40 @@
 -- OntoTradePlatform 테이블 생성 스크립트
 -- Supabase PostgreSQL에서 실행
 
+-- 0. 주식 마스터 데이터 테이블 (실시간 주식 데이터)
+CREATE TABLE IF NOT EXISTS stocks (
+    symbol VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    name_kr VARCHAR(200),  -- 한글명
+    market VARCHAR(50) NOT NULL DEFAULT 'NASDAQ',
+    price DECIMAL(10,4) NOT NULL,
+    open_price DECIMAL(10,4),
+    high_price DECIMAL(10,4),
+    low_price DECIMAL(10,4),
+    previous_close DECIMAL(10,4),
+    change_amount DECIMAL(10,4),
+    change_percent DECIMAL(8,4),
+    volume BIGINT,
+    market_cap BIGINT,
+    currency VARCHAR(5) DEFAULT 'USD',
+    sector VARCHAR(100),
+    industry VARCHAR(100),
+    description TEXT,
+    is_active BOOLEAN DEFAULT true,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 주식 검색을 위한 인덱스 (한글 검색 지원)
+CREATE INDEX IF NOT EXISTS idx_stocks_symbol ON stocks(symbol);
+CREATE INDEX IF NOT EXISTS idx_stocks_name_lower ON stocks(LOWER(name));
+CREATE INDEX IF NOT EXISTS idx_stocks_name_kr_lower ON stocks(LOWER(name_kr));
+CREATE INDEX IF NOT EXISTS idx_stocks_active ON stocks(is_active) WHERE is_active = true;
+
+-- 추가 검색 성능 인덱스
+CREATE INDEX IF NOT EXISTS idx_stocks_name_text ON stocks USING gin(to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS idx_stocks_name_kr_text ON stocks USING gin(to_tsvector('simple', name_kr));
+
 -- 1. 시뮬레이션 세션 테이블
 CREATE TABLE IF NOT EXISTS simulation_sessions (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

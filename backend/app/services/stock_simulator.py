@@ -22,16 +22,16 @@ class StockDataSimulator:
 
         # 시뮬레이션할 주식 목록과 기본 데이터
         self.stock_symbols = {
-            "AAPL": {"name": "Apple Inc.", "base_price": 180.00},
-            "GOOGL": {"name": "Alphabet Inc.", "base_price": 140.00},
-            "MSFT": {"name": "Microsoft Corp.", "base_price": 350.00},
-            "TSLA": {"name": "Tesla Inc.", "base_price": 250.00},
-            "AMZN": {"name": "Amazon.com Inc.", "base_price": 140.00},
-            "NVDA": {"name": "NVIDIA Corp.", "base_price": 800.00},
-            "META": {"name": "Meta Platforms Inc.", "base_price": 350.00},
-            "NFLX": {"name": "Netflix Inc.", "base_price": 450.00},
-            "AMD": {"name": "Advanced Micro Devices", "base_price": 120.00},
-            "CRM": {"name": "Salesforce Inc.", "base_price": 220.00},
+            "AAPL": {"name": "Apple Inc. (애플)", "base_price": 180.00},
+            "GOOGL": {"name": "Alphabet Inc. (구글)", "base_price": 140.00},
+            "MSFT": {"name": "Microsoft Corp. (마이크로소프트)", "base_price": 350.00},
+            "TSLA": {"name": "Tesla Inc. (테슬라)", "base_price": 250.00},
+            "AMZN": {"name": "Amazon.com Inc. (아마존)", "base_price": 140.00},
+            "NVDA": {"name": "NVIDIA Corp. (엔비디아)", "base_price": 800.00},
+            "META": {"name": "Meta Platforms Inc. (메타)", "base_price": 350.00},
+            "NFLX": {"name": "Netflix Inc. (넷플릭스)", "base_price": 450.00},
+            "AMD": {"name": "Advanced Micro Devices (AMD)", "base_price": 120.00},
+            "CRM": {"name": "Salesforce Inc. (세일즈포스)", "base_price": 220.00},
         }
 
         # 초기 주식 데이터 설정

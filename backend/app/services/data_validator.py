@@ -369,6 +369,10 @@ class StockDataValidator:
             if validation.normalized_data:
                 normalized_data.update(validation.normalized_data)
 
+        # name 필드가 있다면 보존
+        if "name" in data and data["name"]:
+            normalized_data["name"] = str(data["name"])
+
         # 논리적 일관성 검증
         logical_validation = self._validate_logical_consistency(normalized_data)
         all_errors.extend(logical_validation.errors)

@@ -7,14 +7,16 @@ Supabase 통합 버전
 import asyncio
 from typing import Dict, List, Optional
 from uuid import UUID
-
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query, Body
 from fastapi.responses import JSONResponse
 
 from app.core.auth import get_current_user_id
 from app.core.logging_system import log_error, log_info
 from app.services.stock_simulator import StockDataSimulator
 from app.services.supabase_service import supabase_service
+from app.services.stock_database_service import stock_db_service
+from app.services.database_migration import db_migration
 
 router = APIRouter(tags=["simulation"])
 
@@ -27,25 +29,247 @@ simulator = StockDataSimulator()
 
 @router.get("/stocks")
 async def get_stock_data():
-    """현재 주식 데이터 조회"""
+    """현재 주식 데이터 조회 - 테이블 기반으로 변경"""
     try:
-        if not simulator.is_running:
-            await simulator.start_simulation()
-
-        stock_data = simulator.get_all_stocks()
-        log_info(f"주식 데이터 조회: {len(stock_data)}개 종목")
+        # 새로운 방식: 데이터베이스에서 주식 데이터 조회
+        stocks = await stock_db_service.get_all_active_stocks()
+        
+        if not stocks:
+            # 데이터가 없으면 샘플 데이터 초기화
+            log_info("주식 데이터가 없어서 샘플 데이터 초기화 중...")
+            await stock_db_service.initialize_sample_data()
+            stocks = await stock_db_service.get_all_active_stocks()
+        
+        # 기존 형식과 호환되도록 변환
+        stock_data = {}
+        for stock in stocks:
+            stock_data[stock['symbol']] = {
+                'symbol': stock['symbol'],
+                'name': stock.get('name', ''),
+                'price': float(stock.get('price', 0)),
+                'change': float(stock.get('change_amount', 0)),
+                'changePercent': float(stock.get('change_percent', 0)),
+                'volume': int(stock.get('volume', 0)),
+                'timestamp': stock.get('last_updated', '')
+            }
+        
+        log_info(f"테이블에서 주식 데이터 조회: {len(stock_data)}개 종목")
 
         return JSONResponse(
             status_code=200,
             content={
                 "success": True,
                 "data": stock_data,
-                "timestamp": simulator.stock_data.get("AAPL", {}).get("timestamp", ""),
+                "timestamp": datetime.now().isoformat(),
+                "source": "database"  # 새로운 필드로 출처 표시
             },
         )
     except Exception as e:
         log_error(f"주식 데이터 조회 중 오류: {str(e)}")
-        raise HTTPException(status_code=500, detail="주식 데이터 조회 실패")
+        
+        # 폴백: 기존 시뮬레이터 방식
+        try:
+            log_info("데이터베이스 조회 실패, 시뮬레이터로 폴백...")
+            if not simulator.is_running:
+                await simulator.start_simulation()
+
+            stock_data = simulator.get_all_stocks()
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "data": stock_data,
+                    "timestamp": simulator.stock_data.get("AAPL", {}).get("timestamp", ""),
+                    "source": "simulator"
+                },
+            )
+        except Exception as fallback_error:
+            log_error(f"폴백 시뮬레이터도 실패: {str(fallback_error)}")
+            raise HTTPException(status_code=500, detail="주식 데이터 조회 실패")
+
+
+@router.get("/stocks/search")
+async def search_stocks(
+    q: str = Query(..., min_length=1, description="검색어 (한글/영어 지원)"),
+    limit: int = Query(20, ge=1, le=100, description="최대 결과 수")
+):
+    """주식 검색 API - 테이블 기반 한글/영어 검색"""
+    try:
+        log_info(f"Stock search request: query='{q}', limit={limit}")
+        
+        # 데이터베이스에서 검색
+        stocks = await stock_db_service.search_stocks(q, limit)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": stocks,
+                "query": q,
+                "count": len(stocks),
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+    except Exception as e:
+        log_error(f"주식 검색 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주식 검색 실패")
+
+
+@router.get("/stocks/all")
+async def get_all_stocks():
+    """모든 활성 주식 목록 조회"""
+    try:
+        stocks = await stock_db_service.get_all_active_stocks()
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": stocks,
+                "count": len(stocks),
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+    except Exception as e:
+        log_error(f"주식 목록 조회 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주식 목록 조회 실패")
+
+
+@router.get("/stocks/{symbol}")
+async def get_stock_detail(symbol: str):
+    """특정 주식 상세 정보 조회"""
+    try:
+        stock = await stock_db_service.get_stock_by_symbol(symbol)
+        
+        if not stock:
+            raise HTTPException(status_code=404, detail="주식을 찾을 수 없습니다")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": stock,
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_error(f"주식 상세 조회 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주식 상세 조회 실패")
+
+
+@router.post("/stocks/sync")
+async def sync_stock_data(
+    symbols: Optional[List[str]] = Body(None, description="동기화할 심볼 목록 (비어있으면 전체)")
+):
+    """외부 API에서 주식 데이터 동기화"""
+    try:
+        log_info(f"Stock data sync requested: {symbols}")
+        
+        result = await stock_db_service.sync_from_external_api(symbols)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": result,
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+    except Exception as e:
+        log_error(f"주식 데이터 동기화 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주식 데이터 동기화 실패")
+
+
+@router.post("/stocks/initialize")
+async def initialize_stock_data():
+    """주식 데이터 초기화 (샘플 데이터)"""
+    try:
+        success = await stock_db_service.initialize_sample_data()
+        
+        if success:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": "주식 데이터 초기화 완료",
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        else:
+            raise HTTPException(status_code=500, detail="주식 데이터 초기화 실패")
+            
+    except Exception as e:
+        log_error(f"주식 데이터 초기화 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="주식 데이터 초기화 실패")
+
+
+@router.post("/database/migrate")
+async def migrate_database():
+    """데이터베이스 테이블 자동 생성 및 마이그레이션"""
+    try:
+        log_info("Starting database migration...")
+        
+        result = await db_migration.run_full_migration()
+        
+        if result["success"]:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": "데이터베이스 마이그레이션 완료",
+                    "data": result,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"마이그레이션 실패: {result.get('error', 'Unknown error')}"
+            )
+            
+    except Exception as e:
+        log_error(f"데이터베이스 마이그레이션 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="데이터베이스 마이그레이션 실패")
+
+
+@router.get("/database/status")
+async def check_database_status():
+    """데이터베이스 상태 확인"""
+    try:
+        # 주식 테이블 존재 여부 확인
+        stocks_exists = await db_migration.check_table_exists('stocks')
+        
+        # 테이블 정보 조회
+        table_info = await db_migration.get_table_info('stocks') if stocks_exists else None
+        
+        # 주식 데이터 개수 확인
+        stock_count = 0
+        if stocks_exists:
+            try:
+                stocks = await stock_db_service.get_all_active_stocks()
+                stock_count = len(stocks)
+            except:
+                pass
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": {
+                    "stocks_table_exists": stocks_exists,
+                    "stock_count": stock_count,
+                    "table_info": table_info,
+                    "migration_needed": not stocks_exists,
+                },
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+        
+    except Exception as e:
+        log_error(f"데이터베이스 상태 확인 중 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="데이터베이스 상태 확인 실패")
 
 
 @router.post("/start")

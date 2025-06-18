@@ -3,7 +3,7 @@
  * OntoTradePlatform - Simulation API Integration
  */
 
-import { apiRequest, getAuthHeaders, API_BASE_URL } from "./api";
+import { apiRequest, API_BASE_URL } from "./api";
 
 const SIMULATION_API_URL = `${API_BASE_URL}/simulation`;
 
@@ -202,45 +202,68 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   }
 };
 
+import { io, Socket } from 'socket.io-client';
+
+// Socket.IO 클라이언트 타입 정의
+export interface SocketIOClient extends Socket {
+  on(event: 'connect', listener: () => void): this;
+  on(event: 'stock_update', listener: (data: any) => void): this;
+  on(event: 'connect_error', listener: (error: Error) => void): this;
+  on(event: 'disconnect', listener: (reason: string) => void): this;
+  on(event: string, listener: (...args: any[]) => void): this;
+}
+
 /**
- * WebSocket 연결 생성 (실시간 주식 데이터)
+ * Socket.IO 연결 생성 (실시간 주식 데이터)
  */
 export const createWebSocketConnection = (
   onMessage: (data: any) => void,
-  onError?: (error: Event) => void,
-  onClose?: (event: CloseEvent) => void,
-): WebSocket => {
-  const wsUrl = `ws://127.0.0.1:8000/api/simulation/ws`;
-  const ws = new WebSocket(wsUrl);
+  onError?: (error: Error) => void,
+  onClose?: (event: string) => void,
+): SocketIOClient => {
+  // Socket.IO 클라이언트 생성
+  const socket: SocketIOClient = io('http://127.0.0.1:8000', {
+    path: '/socket.io',
+    transports: ['websocket'],
+    autoConnect: true,
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
+  });
 
-  ws.onopen = (event) => {
-    console.log("WebSocket 연결 성공:", event);
-  };
+  // 연결 이벤트 핸들러
+  socket.on('connect', () => {
+    console.log('Socket.IO 연결 성공:', socket.id);
+  });
 
-  ws.onmessage = (event) => {
+  // 주식 업데이트 이벤트 핸들러
+  socket.on('stock_update', (data: any) => {
     try {
-      const data = JSON.parse(event.data);
       onMessage(data);
     } catch (error) {
-      console.error("WebSocket 메시지 파싱 오류:", error);
+      console.error('주식 업데이트 처리 중 오류:', error);
     }
-  };
+  });
 
-  ws.onerror = (error) => {
-    console.error("WebSocket 오류:", error);
+  // 에러 이벤트 핸들러
+  socket.on('connect_error', (error: Error) => {
+    console.error('Socket.IO 연결 오류:', error);
     if (onError) {
       onError(error);
     }
-  };
+  });
 
-  ws.onclose = (event) => {
-    console.log("WebSocket 연결 종료:", event);
+  // 연결 종료 이벤트 핸들러
+  socket.on('disconnect', (reason: string) => {
+    console.log('Socket.IO 연결 종료:', reason);
     if (onClose) {
-      onClose(event);
+      onClose(reason);
     }
-  };
+  });
 
-  return ws;
+  return socket;
 };
 
 /**

@@ -9,12 +9,11 @@ import {
   getSimulationPortfolio,
   getLeaderboard,
   createWebSocketConnection,
-  formatCurrency,
-  formatPercent,
   type StockData,
   type SimulationSession,
   type DetailedHolding,
   type LeaderboardEntry,
+  type SocketIOClient
 } from "../services/simulationApi";
 
 const SimulationPage: React.FC = () => {
@@ -31,7 +30,8 @@ const SimulationPage: React.FC = () => {
     [],
   );
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
+  // Socket.IO 연결 상태 추적
+  const [webSocket, setWebSocket] = useState<SocketIOClient | null>(null);
   const [error, setError] = useState<string>("");
   const [selectedStock, setSelectedStock] = useState<string>("");
   const [tradeQuantity, setTradeQuantity] = useState<number>(1);
@@ -94,25 +94,52 @@ const SimulationPage: React.FC = () => {
       console.log("리더보드 데이터 로딩 완료:", leaderboardData.length, "명");
       setLeaderboard(leaderboardData);
 
-      // 5단계: WebSocket 연결
-      console.log("WebSocket 연결 중...");
-      setLoadingStep("WebSocket 연결 중...");
-      const ws = createWebSocketConnection(
+      // 5단계: Socket.IO 연결
+      console.log("Socket.IO 연결 중...");
+      setLoadingStep("실시간 데이터 연결 중...");
+      
+      const socket = createWebSocketConnection(
         (data) => {
-          if (data.type === "stock_update") {
-            console.log("실시간 주식 데이터 업데이트 수신");
-            setStockData(data.data);
+          console.log("실시간 주식 데이터 업데이트 수신:", data);
+          // 서버에서 보내는 데이터 형식에 따라 조정이 필요할 수 있음
+          if (data.symbol && data.price) {
+            // 단일 주식 업데이트
+            setStockData(prev => ({
+              ...prev,
+              [data.symbol]: {
+                ...prev[data.symbol],
+                ...data
+              }
+            }));
+          } else if (typeof data === 'object') {
+            // 전체 주식 데이터 업데이트
+            setStockData(data);
           }
         },
-        (_error) => {
-          console.error("WebSocket 연결 오류");
-          setError(
-            "실시간 데이터 연결에 실패했습니다. 페이지를 새로고침해주세요.",
-          );
+        (error) => {
+          console.error("Socket.IO 연결 오류:", error);
+          setError("실시간 데이터 연결에 실패했습니다. 페이지를 새로고침해주세요.");
         },
-        (_event) => console.log("WebSocket 연결이 종료되었습니다."),
+        (reason) => {
+          console.log("Socket.IO 연결 종료:", reason);
+          if (reason === 'io server disconnect') {
+            // 서버에서 연결이 끊긴 경우 자동으로 재연결을 시도합니다.
+            console.log('서버 연결이 끊어졌습니다. 자동으로 재연결을 시도합니다.');
+          }
+        }
       );
-      setWebSocket(ws);
+      
+      // 연결이 완료되면 서버에 구독 요청을 보냅니다.
+      socket.on('connect', () => {
+        console.log('Socket.IO 연결 성공, 주식 데이터 구독 요청 중...');
+        // 현재 보유 중인 주식이 있다면 해당 주식들에 대한 실시간 업데이트를 요청
+        if (detailedHoldings.length > 0) {
+          const symbols = detailedHoldings.map(h => h.symbol);
+          socket.emit('subscribe_stock', { symbols });
+        }
+      });
+      
+      setWebSocket(socket);
 
       console.log("시뮬레이션 초기화 완료!");
     } catch (err) {
@@ -619,10 +646,14 @@ const SimulationPage: React.FC = () => {
                         transition: "border-color 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#2563eb";
+                        if (!selectedStock || !stockData[selectedStock]) {
+                          e.currentTarget.style.borderColor = "#2563eb";
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#1e293b";
+                        if (!selectedStock || !stockData[selectedStock]) {
+                          e.currentTarget.style.borderColor = "#1e293b";
+                        }
                       }}
                     >
                       <span>
@@ -883,15 +914,12 @@ const SimulationPage: React.FC = () => {
                         >
                           <div>
                             <div
-                              style={{
-                                fontWeight: "bold",
-                                marginBottom: "4px",
-                              }}
+                              style={{ fontWeight: "bold", marginBottom: "4px" }}
                             >
                               {holding.symbol}
                             </div>
                             <div style={{ fontSize: "14px", color: "#94a3b8" }}>
-                              {t("수량", "Qty")}: {holding.quantity} |
+                              {t("수량", "Qty")}: {holding.quantity} |{" "}
                               {t("평균가", "Avg")}:{" "}
                               {formatCurrency(holding.avg_price)}
                             </div>
@@ -948,7 +976,7 @@ const SimulationPage: React.FC = () => {
                   }}
                 >
                   📈 {t("실시간 주식 데이터", "Real-time Stock Data")}
-                  {webSocket?.readyState === WebSocket.OPEN && (
+                  {webSocket?.connected ? (
                     <span
                       style={{
                         color: "#34d399",
@@ -957,6 +985,16 @@ const SimulationPage: React.FC = () => {
                       }}
                     >
                       🟢 {t("연결됨", "Connected")}
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        color: "#f87171",
+                        fontSize: "14px",
+                        marginLeft: "8px",
+                      }}
+                    >
+                      🔴 {t("연결 끊김", "Disconnected")}
                     </span>
                   )}
                 </h2>
@@ -1162,7 +1200,6 @@ const SimulationPage: React.FC = () => {
           onClose={() => setIsStockSearchOpen(false)}
           stockData={stockData}
           onSelectStock={(symbol) => setSelectedStock(symbol)}
-          selectedStock={selectedStock}
           language={language}
         />
       )}
