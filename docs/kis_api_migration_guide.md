@@ -55,7 +55,7 @@ async def get_access_token():
         "appkey": os.getenv("KIS_APP_KEY"),
         "appsecret": os.getenv("KIS_APP_SECRET")
     }
-    
+
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, json=body) as response:
             if response.status == 200:

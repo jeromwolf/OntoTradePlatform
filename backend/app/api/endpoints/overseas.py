@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import Dict, Optional
-from pydantic import BaseModel
-import aiohttp
+import json
 import os
 from datetime import datetime, timedelta
-import json
+from typing import Dict, Optional
+
+import aiohttp
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter()
+
 
 # KIS API 클라이언트 (테스트 코드에서 구현한 것과 동일한 기능을 가정)
 class KISClient:
@@ -32,19 +34,29 @@ class KISClient:
         # 해외주식 계좌 잔고 조회 (기존 구현과 동일)
         pass
 
-    async def order_overseas_stock(self, symbol: str, exchange: str, qty: int, price: float, 
-                                 order_type: str = "00", side: str = "BUY"):
+    async def order_overseas_stock(
+        self,
+        symbol: str,
+        exchange: str,
+        qty: int,
+        price: float,
+        order_type: str = "00",
+        side: str = "BUY",
+    ):
         # 해외주식 주문 (기존 구현과 동일)
         pass
+
 
 # 의존성 주입을 위한 KIS 클라이언트 인스턴스
 def get_kis_client():
     return KISClient()
 
+
 # 요청/응답 모델
 class StockInfoRequest(BaseModel):
     symbol: str
     exchange: str = "NAS"
+
 
 class OrderRequest(BaseModel):
     symbol: str
@@ -54,12 +66,11 @@ class OrderRequest(BaseModel):
     order_type: str = "00"  # 00: 지정가, 01: 시장가
     side: str = "BUY"  # BUY or SELL
 
+
 # API 엔드포인트
 @router.get("/stock/{symbol}")
 async def get_stock_info(
-    symbol: str,
-    exchange: str = "NAS",
-    kis: KISClient = Depends(get_kis_client)
+    symbol: str, exchange: str = "NAS", kis: KISClient = Depends(get_kis_client)
 ):
     """
     해외주식 정보 조회 API
@@ -68,16 +79,15 @@ async def get_stock_info(
     """
     try:
         result = await kis.get_overseas_stock_info(symbol, exchange)
-        if not result or 'output' not in result:
+        if not result or "output" not in result:
             raise HTTPException(status_code=404, detail="주식 정보를 찾을 수 없습니다.")
         return {"success": True, "data": result["output"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/account/balance")
-async def get_account_balance(
-    kis: KISClient = Depends(get_kis_client)
-):
+async def get_account_balance(kis: KISClient = Depends(get_kis_client)):
     """
     해외주식 계좌 잔고 조회 API
     """
@@ -89,11 +99,9 @@ async def get_account_balance(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/order")
-async def place_order(
-    order: OrderRequest,
-    kis: KISClient = Depends(get_kis_client)
-):
+async def place_order(order: OrderRequest, kis: KISClient = Depends(get_kis_client)):
     """
     해외주식 주문 API
     - symbol: 주식 심볼
@@ -110,17 +118,17 @@ async def place_order(
             qty=order.qty,
             price=order.price,
             order_type=order.order_type,
-            side=order.side
+            side=order.side,
         )
-        
-        if not result or 'output' not in result:
+
+        if not result or "output" not in result:
             raise HTTPException(status_code=400, detail="주문에 실패했습니다.")
-            
+
         return {
             "success": True,
             "message": "주문이 접수되었습니다.",
             "data": result.get("output"),
-            "order_detail": result.get("order_detail")
+            "order_detail": result.get("order_detail"),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

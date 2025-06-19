@@ -10,8 +10,8 @@ export interface StockQuote {
 
 export interface OrderRequest {
   symbol: string;
-  side: 'buy' | 'sell';
-  orderType: 'limit' | 'market';
+  side: "buy" | "sell";
+  orderType: "limit" | "market";
   price: number;
   quantity: number;
 }

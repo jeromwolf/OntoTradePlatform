@@ -48,7 +48,7 @@ const PortfolioPage: React.FC = () => {
   // 포트폴리오가 없으면 포트폴리오 목록으로 리다이렉트
   useEffect(() => {
     if (!loading && portfolios.length === 0) {
-      navigate('/portfolios', { replace: true });
+      navigate("/portfolios", { replace: true });
     }
   }, [loading, portfolios, navigate]);
 

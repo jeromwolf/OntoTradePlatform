@@ -183,7 +183,10 @@ function App() {
                 </PortfolioProvider>
               }
             />
-            <Route path="/portfolio" element={<Navigate to="/portfolios" replace />} />
+            <Route
+              path="/portfolio"
+              element={<Navigate to="/portfolios" replace />}
+            />
             <Route
               path="/portfolios"
               element={
@@ -274,7 +277,6 @@ function App() {
                 </PortfolioProvider>
               }
             />
-
           </Routes>
         </div>
       </Router>

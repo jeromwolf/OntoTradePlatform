@@ -6,14 +6,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.endpoints import (
-    auth,
-    portfolio_holdings,
-    portfolios,
-    stock_search,
-    watchlist,
-    kis as kis_router,
-)
+from app.api.endpoints import auth
+from app.api.endpoints import kis as kis_router
+from app.api.endpoints import portfolio_holdings, portfolios, stock_search, watchlist
 from app.core.config import settings
 from app.core.monitoring import init_sentry
 from app.core.websocket_simple import (
