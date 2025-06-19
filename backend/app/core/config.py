@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # 애플리케이션 기본 설정
     PROJECT_NAME: str = "OntoTrade API"
     VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api/v1"  # API 버전 접두사
     DEBUG: Optional[bool] = False
 
     # 서버 설정 (개발용으로 localhost 사용)

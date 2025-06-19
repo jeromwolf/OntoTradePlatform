@@ -12,6 +12,7 @@ from app.api.endpoints import (
     portfolios,
     stock_search,
     watchlist,
+    kis as kis_router,
 )
 from app.core.config import settings
 from app.core.monitoring import init_sentry
@@ -115,6 +116,7 @@ app.include_router(simulation.router, prefix="/api/simulation", tags=["simulatio
 app.include_router(stock_search.router, prefix="/api/stocks", tags=["stock-search"])
 app.include_router(watchlist.router, prefix="/api/watchlists", tags=["watchlists"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(kis_router.router, prefix="/api/kis", tags=["kis"])
 
 # Socket.IO와 FastAPI를 결합한 ASGI 앱 생성
 socket_app = socketio.ASGIApp(websocket_manager.sio, app, socketio_path="/socket.io")

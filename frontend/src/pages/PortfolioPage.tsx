@@ -3,12 +3,18 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { usePortfolio } from "../contexts/PortfolioContext";
 
+interface PortfolioPageParams {
+  portfolioId?: string;
+  [key: string]: string | undefined;
+}
+
 const PortfolioPage: React.FC = () => {
   const navigate = useNavigate();
+  const { portfolioId } = useParams<PortfolioPageParams>();
   const { user, signOut } = useAuth();
   const {
     portfolios,
@@ -23,12 +29,28 @@ const PortfolioPage: React.FC = () => {
   // 지원 언어 상태
   const [language, setLanguage] = useState<"ko" | "en">("ko");
 
-  // 첫 번째 포트폴리오 자동 선택
+  // URL 파라미터에 따라 포트폴리오 선택
   useEffect(() => {
-    if (portfolios.length > 0 && !currentPortfolio) {
-      selectPortfolio(portfolios[0].id);
+    if (portfolioId) {
+      // URL에 포트폴리오 ID가 있으면 해당 포트폴리오 선택
+      selectPortfolio(portfolioId);
+    } else if (portfolios.length > 0 && !currentPortfolio) {
+      // URL에 포트폴리오 ID가 없고, 현재 선택된 포트폴리오가 없으면 첫 번째 포트폴리오 선택 후 리다이렉트
+      const firstPortfolioId = portfolios[0].id;
+      selectPortfolio(firstPortfolioId);
+      navigate(`/portfolios/${firstPortfolioId}`, { replace: true });
+    } else if (currentPortfolio) {
+      // 현재 선택된 포트폴리오가 있으면 해당 포트폴리오 페이지로 리다이렉트
+      navigate(`/portfolios/${currentPortfolio.id}`, { replace: true });
     }
-  }, [portfolios, currentPortfolio, selectPortfolio]);
+  }, [portfolioId, portfolios, currentPortfolio, selectPortfolio, navigate]);
+
+  // 포트폴리오가 없으면 포트폴리오 목록으로 리다이렉트
+  useEffect(() => {
+    if (!loading && portfolios.length === 0) {
+      navigate('/portfolios', { replace: true });
+    }
+  }, [loading, portfolios, navigate]);
 
   // 통화 포맷 함수
   const formatCurrency = (amount: number) => {

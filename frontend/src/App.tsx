@@ -24,6 +24,7 @@ import LearningPage from "./pages/LearningPage";
 import SimulationPage from "./pages/SimulationPage";
 import SessionMonitor from "./components/SessionMonitor";
 import MonitoringExample from "./components/MonitoringExample";
+import PortfolioList from "./components/portfolio/PortfolioList";
 
 // 프로텍티드 라우트 컴포넌트
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -182,8 +183,19 @@ function App() {
                 </PortfolioProvider>
               }
             />
+            <Route path="/portfolio" element={<Navigate to="/portfolios" replace />} />
             <Route
-              path="/portfolio"
+              path="/portfolios"
+              element={
+                <PortfolioProvider>
+                  <ProtectedRoute>
+                    <PortfolioList />
+                  </ProtectedRoute>
+                </PortfolioProvider>
+              }
+            />
+            <Route
+              path="/portfolios/:portfolioId"
               element={
                 <PortfolioProvider>
                   <ProtectedRoute>
@@ -262,16 +274,7 @@ function App() {
                 </PortfolioProvider>
               }
             />
-            <Route
-              path="/simulation"
-              element={
-                <PortfolioProvider>
-                  <ProtectedRoute>
-                    <SimulationPage />
-                  </ProtectedRoute>
-                </PortfolioProvider>
-              }
-            />
+
           </Routes>
         </div>
       </Router>
